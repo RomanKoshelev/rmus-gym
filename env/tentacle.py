@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import Box2D
 import gym
+
 import numpy as np
 # noinspection PyUnresolvedReferences
 from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, contactListener, revoluteJointDef,
@@ -83,8 +85,9 @@ class Tentacle(gym.Env):
         self.target = []
         r = .1
         t = self.world.CreateStaticBody(
+            position=(x, y),
             fixtures=fixtureDef(
-                shape=circleShape(radius=r, pos=(x, y)),
+                shape=circleShape(radius=r, pos=(0, 0)),
                 categoryBits=TARGET_MASK
             ))
         t.color1 = (0.9, 0., 0.)
@@ -130,7 +133,7 @@ class Tentacle(gym.Env):
                 maskBits=GROUND_MASK
             ))
         s.color1, s.color2 = (0.0, 0.9, 0.), (0.0, 0.5, 0.)
-        s.ini = {'x': x, 'y': y, 'w': 2*r, 'h': 2*r}
+        s.ini = {'x': x, 'y': y, 'w': 2 * r, 'h': 2 * r}
         return s
 
     def _segment(self, sdef, parent=None):
@@ -156,7 +159,7 @@ class Tentacle(gym.Env):
 
     def _rev_joint(self, a, b):
         angle = 1.3
-        torque = 100+2.5
+        torque = 2.2
         speed = .25
         return self.world.CreateJoint(revoluteJointDef(
             bodyA=a,
@@ -187,10 +190,22 @@ class Tentacle(gym.Env):
 
     def _step(self, action):
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
-        state = [0., 0.]
+        state = self._make_state()
         reward = 0
         done = False
         return np.array(state), reward, done, {}
+
+    def _make_state(self):
+        head = self.tentacle[len(self.tentacle) - 1]
+
+        hx, hy = head.position[0], head.position[1]
+        tx, ty = self.target[0].position[0], self.target[0].position[1]
+        target_dist = np.sqrt((hx - tx) ** 2 + (hy - ty) ** 2)
+
+        hvx, hvy = head.linearVelocity.x, head.linearVelocity.y
+        head_vel = np.sqrt(hvx ** 2 + hvy ** 2)
+
+        return target_dist, head_vel
 
     # endregion
 
@@ -238,6 +253,7 @@ class Tentacle(gym.Env):
     pass  # endlass
 
 
+# ------------------------------------------------------------------------------------------------------------------
 # region main
 def main():
     game = "Tentacle-v0"
@@ -253,9 +269,9 @@ def main():
         s, r, done, info = env.step(a)
         total_reward += r
 
-        if steps % 20 == 0 or done:
-            print(["{:+0.2f}".format(x) for x in s])
-            print("step {} total_reward {:+0.2f}".format(steps, total_reward))
+        if steps % 5 == 0 or done:
+            print("step {:3d}:".format(steps), end=' ')
+            print(["{:+6.2f}".format(x) for x in s])
         steps += 1
 
         a = env.action_space.sample()
