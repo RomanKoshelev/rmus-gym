@@ -191,7 +191,7 @@ class Tentacle(gym.Env):
     def _step(self, action):
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
-        reward = 0
+        reward = self._make_reward(state)
         done = False
         return np.array(state), reward, done, {}
 
@@ -206,6 +206,11 @@ class Tentacle(gym.Env):
         head_vel = np.sqrt(hvx ** 2 + hvy ** 2)
 
         return target_dist, head_vel
+
+    def _make_reward(self, state):
+        d = state[0]+.0001
+        v = state[1]+.0001
+        return 1/d**4 + v/10 - 1
 
     # endregion
 
@@ -262,16 +267,16 @@ def main():
     env.reset()
 
     steps = 0
-    total_reward = 0
     a = 0
 
     while True:
         s, r, done, info = env.step(a)
-        total_reward += r
 
         if steps % 5 == 0 or done:
             print("step {:3d}:".format(steps), end=' ')
-            print(["{:+6.2f}".format(x) for x in s])
+            print(["{:+6.2f}".format(x) for x in s], end=' ')
+            print("    reward: {:6.1f}".format(r), end=' ')
+            print()
         steps += 1
 
         a = env.action_space.sample()
