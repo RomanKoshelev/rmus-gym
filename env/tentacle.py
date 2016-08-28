@@ -3,7 +3,8 @@ import Box2D
 import gym
 import numpy as np
 # noinspection PyUnresolvedReferences
-from Box2D.b2 import edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener
+from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, contactListener, revoluteJointDef,
+                      weldJointDef)
 from gym import spaces
 from gym.utils import seeding
 
@@ -16,6 +17,7 @@ GROUND_HEIGHT = VIEWPORT_H / SCALE / 6
 GROUND_MASK = 0x001
 SEGMENT_MASK = 0x002
 TARGET_MASK = 0x004
+
 
 # endregion
 
@@ -86,7 +88,7 @@ class Tentacle(gym.Env):
                 categoryBits=TARGET_MASK
             ))
         t.color1 = (0.9, 0., 0.)
-        t.color2 = (0.4, 0., 0.)
+        t.color2 = (0.8, 0., 0.)
         self.target.append(t)
 
     def _create_tentacle(self):
@@ -104,13 +106,32 @@ class Tentacle(gym.Env):
         s1 = self._segment(segdef[1], parent=s0)
         s2 = self._segment(segdef[2], parent=s1)
         s3 = self._segment(segdef[3], parent=s2)
+        sh = self._head(parent=s3)
 
-        j01 = self._joint(s0, s1)
-        j12 = self._joint(s1, s2)
-        j23 = self._joint(s2, s3)
+        j01 = self._rev_joint(s0, s1)
+        j12 = self._rev_joint(s1, s2)
+        j23 = self._rev_joint(s2, s3)
+        j3h = self._weld_joint(s3, sh)
 
-        self.joints.extend([j01, j12, j23])
-        self.tentacle.extend([s0, s1, s2, s3])
+        self.joints.extend([j01, j12, j23, j3h])
+        self.tentacle.extend([s0, s1, s2, s3, sh])
+
+    def _head(self, parent):
+        W, H = self._world_size()
+        r = .12
+        x = W / 2
+        y = parent.ini['y'] + parent.ini['h']
+        s = self.world.CreateDynamicBody(
+            position=(x, y),
+            fixtures=fixtureDef(
+                shape=circleShape(radius=r, pos=(0, 0)),
+                density=0.1,
+                categoryBits=SEGMENT_MASK,
+                maskBits=GROUND_MASK
+            ))
+        s.color1, s.color2 = (0.0, 0.9, 0.), (0.0, 0.5, 0.)
+        s.ini = {'x': x, 'y': y, 'w': 2*r, 'h': 2*r}
+        return s
 
     def _segment(self, sdef, parent=None):
         W, H = self._world_size()
@@ -133,9 +154,9 @@ class Tentacle(gym.Env):
         s.ini = {'x': x, 'y': y, 'w': w, 'h': h}
         return s
 
-    def _joint(self, a, b):
+    def _rev_joint(self, a, b):
         angle = 1.3
-        torque = 2.5
+        torque = 100+2.5
         speed = .25
         return self.world.CreateJoint(revoluteJointDef(
             bodyA=a,
@@ -148,6 +169,15 @@ class Tentacle(gym.Env):
             motorSpeed=speed,
             lowerAngle=-angle,
             upperAngle=angle,
+        ))
+
+    def _weld_joint(self, a, b):
+        return self.world.CreateJoint(weldJointDef(
+            bodyA=a,
+            bodyB=b,
+            localAnchorA=(a.ini['w'] / 2 + b.ini['w'] / 2, a.ini['h']),
+            localAnchorB=(b.ini['w'] / 2, 0),
+            referenceAngle=0
         ))
 
     # endregion
