@@ -5,13 +5,13 @@ import gym
 def main():
     # game = "Acrobot-v0"
     # game = "MountainCar-v0"
-    # game = "CartPole-v0"
-    game = "Tentacle-v0"
+    game = "CartPole-v0"
+    # game = "Tentacle-v0"
     env = gym.make(game)
     env.monitor.start('experiments/Tentacle-v0', force=True)
-    layer_param_list = [deep_q.RELULayerParams(neurons=100, name="relu1"),
-                        deep_q.RELULayerParams(neurons=100, name="relu2"),
-                        deep_q.RELULayerParams(neurons=100, name="relu3")]
+    layer_param_list = [deep_q.RELULayerParams(neurons=200, name="relu1"),
+                        deep_q.RELULayerParams(neurons=200, name="relu2"),
+                        deep_q.RELULayerParams(neurons=200, name="relu3")]
 
     # layer_param_list.append(
     #        deep_q.ConvolutionalLayerParams(patch_size=8, stride=4, features=32, pool_size=2,  name="conv1"))

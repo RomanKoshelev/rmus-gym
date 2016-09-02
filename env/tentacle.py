@@ -269,6 +269,8 @@ def main():
     steps = 0
     a = 0
 
+    # todo: Actions
+
     while True:
         s, r, done, info = env.step(a)
 
