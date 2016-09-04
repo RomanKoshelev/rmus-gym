@@ -41,9 +41,8 @@ class Tentacle(gym.Env):
         self.ground = None
         self.tentacle = None
 
-        self.action_space = spaces.Discrete(2)
-        max_ob = np.array([1., 1.])
-        self.observation_space = spaces.Box(-max_ob, max_ob)
+        self.action_space = spaces.Box(low=0, high=1, shape=(3,))
+        self.observation_space = spaces.Box(low=0, high=100, shape=(2,))
 
         self._reset()
 
@@ -65,7 +64,7 @@ class Tentacle(gym.Env):
         self._create_tentacle()
         self._create_target(*target_pos)
         self.drawlist = self.ground + self.tentacle + self.target
-        return self._step(0)[0]
+        return np.array(self._make_state())
 
     def _create_ground(self):
         self.ground = []
@@ -189,6 +188,7 @@ class Tentacle(gym.Env):
     # region Processing
 
     def _step(self, action):
+        assert self.action_space.contains(action), "Invalid action %r (%s)" % (action, type(action))
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
         reward = self._make_reward(state)
@@ -208,8 +208,8 @@ class Tentacle(gym.Env):
         return target_dist, head_vel
 
     def _make_reward(self, state):
-        d = state[0]+.0001
-        v = state[1]+.0001
+        d = state[0]+.0001  # distance to target
+        v = state[1]+.0001  # head velocity
         return 1/d**4 + v/10 - 1
 
     # endregion
@@ -260,30 +260,38 @@ class Tentacle(gym.Env):
 
 # ------------------------------------------------------------------------------------------------------------------
 # region main
+
+def sample_action(env, s):
+    return env.action_space.sample()
+
+
+def str_arr(arr, tmpl="%4.2f"):
+    return '[ ' + ', '.join([tmpl % x for x in arr]) + ' ]'
+
+
 def main():
     game = "Tentacle-v0"
     env = gym.make(game)
     env.monitor.start('/tmp/' + game, force=True)
     env.reset()
+    step = 0
 
-    steps = 0
-    a = 0
-
-    # todo: Actions
-
+    a = env.action_space.sample()
     while True:
         s, r, done, info = env.step(a)
+        a = sample_action(env, s)
 
-        if steps % 5 == 0 or done:
-            print("step {:3d}:".format(steps), end=' ')
-            print(["{:+6.2f}".format(x) for x in s], end=' ')
-            print("    reward: {:6.1f}".format(r), end=' ')
-            print()
-        steps += 1
+        if step % 10 == 0 or done:
+            log = ''
+            SEP = '   :   '
+            log += "step: %3d" % step + SEP
+            log += "act: %s" % str_arr(a) + SEP
+            log += "state: %s" % str_arr(s) + SEP
+            log += "reward: %4.1f" % r
+            print(log)
+        step += 1
 
-        a = env.action_space.sample()
-
-        if done:
+        if done or step > 300:
             break
 
 
