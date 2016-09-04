@@ -4,7 +4,6 @@ import Box2D
 import gym
 
 import numpy as np
-# noinspection PyUnresolvedReferences
 from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, contactListener, revoluteJointDef,
                       weldJointDef)
 from gym import spaces
@@ -41,7 +40,7 @@ class Tentacle(gym.Env):
         self.ground = None
         self.tentacle = None
 
-        self.action_space = spaces.Box(low=0, high=1, shape=(3,))
+        self.action_space = spaces.Box(low=-1, high=1, shape=(3,))
         self.observation_space = spaces.Box(low=0, high=100, shape=(2,))
 
         self._reset()
@@ -109,14 +108,13 @@ class Tentacle(gym.Env):
         s2 = self._segment(segdef[2], parent=s1)
         s3 = self._segment(segdef[3], parent=s2)
         sh = self._head(parent=s3)
+        self.tentacle.extend([s0, s1, s2, s3, sh])
 
         j01 = self._rev_joint(s0, s1)
         j12 = self._rev_joint(s1, s2)
         j23 = self._rev_joint(s2, s3)
-        j3h = self._weld_joint(s3, sh)
-
-        self.joints.extend([j01, j12, j23, j3h])
-        self.tentacle.extend([s0, s1, s2, s3, sh])
+        self._weld_joint(s3, sh)
+        self.joints.extend([j01, j12, j23])
 
     def _head(self, parent):
         W, H = self._world_size()
@@ -189,6 +187,14 @@ class Tentacle(gym.Env):
 
     def _step(self, action):
         assert self.action_space.contains(action), "Invalid action %r (%s)" % (action, type(action))
+        assert len(action) == len(self.joints), "Action size: %d, joints: %d" % (len(action), len(self.joints))
+
+        for i in range(len(self.joints)):
+            j = self.joints[0]
+            a = action[i]
+            j.motorSpeed = float(1000 * np.sign(a))
+            j.maxMotorTorque = float(1000 * np.clip(np.abs(a), 0, 1))
+
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
         reward = self._make_reward(state)
@@ -208,9 +214,9 @@ class Tentacle(gym.Env):
         return target_dist, head_vel
 
     def _make_reward(self, state):
-        d = state[0]+.0001  # distance to target
-        v = state[1]+.0001  # head velocity
-        return 1/d**4 + v/10 - 1
+        d = state[0] + .0001  # distance to target
+        v = state[1] + .0001  # head velocity
+        return 1 / d ** 4 + v / 10 - 1
 
     # endregion
 
@@ -261,12 +267,9 @@ class Tentacle(gym.Env):
 # ------------------------------------------------------------------------------------------------------------------
 # region main
 
-def sample_action(env, s):
+def sample_action(env, state):
+    assert env.observation_space.contains(state), "Invalid state %r (%s)" % (state, type(state))
     return env.action_space.sample()
-
-
-def str_arr(arr, tmpl="%4.2f"):
-    return '[ ' + ', '.join([tmpl % x for x in arr]) + ' ]'
 
 
 def main():
@@ -282,16 +285,19 @@ def main():
         a = sample_action(env, s)
 
         if step % 10 == 0 or done:
+            def str_arr(arr, tmpl):
+                return '[ ' + ', '.join([tmpl % x for x in arr]) + ' ]'
+
             log = ''
             SEP = '   :   '
             log += "step: %3d" % step + SEP
-            log += "act: %s" % str_arr(a) + SEP
-            log += "state: %s" % str_arr(s) + SEP
+            log += "act: %s" % str_arr(a, "%+4.2f") + SEP
+            log += "state: %s" % str_arr(s, "%4.2f") + SEP
             log += "reward: %4.1f" % r
             print(log)
         step += 1
 
-        if done or step > 300:
+        if done or step > 3000:
             break
 
 
