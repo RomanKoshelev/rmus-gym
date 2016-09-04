@@ -233,8 +233,7 @@ class Neural_Network:
                 self.tick += 1
                 if training_params.show_display and i_episode % training_params.show_freq == 0:
                     self.env.render()
-                output = self.sess.run(self.training_output_layer,
-                                       feed_dict={self.training_input_layer: [obs]})
+                output = self.sess.run(self.training_output_layer, feed_dict={self.training_input_layer: [obs]})
 
                 # start off with mostly random actions
                 # slowly take away the random actions
@@ -254,7 +253,7 @@ class Neural_Network:
                 log += "%2d.%03d" % (i_episode, t) + SEP
                 log += "a:%s" % str_arr(action, "%+4.2f") + SEP
                 log += "s:%s" % str_arr(obs, "%4.1f") + SEP
-                log += "r:%3.0f" % score
+                log += "r=%+06.1f" % score
                 print(log)
                 # ==================================
 

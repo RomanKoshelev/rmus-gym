@@ -18,6 +18,8 @@ GROUND_HEIGHT = VIEWPORT_H / SCALE / 6
 GROUND_MASK = 0x001
 SEGMENT_MASK = 0x002
 TARGET_MASK = 0x004
+MAX_SPEED = 1000
+MAX_TORQUE = 1000
 
 
 # endregion
@@ -41,7 +43,7 @@ class Tentacle(gym.Env):
         self.tentacle = None
 
         self.action_space = spaces.Box(low=-1, high=1, shape=(3,))
-        self.observation_space = spaces.Box(low=0, high=100, shape=(2,))
+        self.observation_space = spaces.Box(low=-100, high=100, shape=(9,))
 
         self._reset()
 
@@ -192,8 +194,8 @@ class Tentacle(gym.Env):
         for i in range(len(self.joints)):
             j = self.joints[0]
             a = action[i]
-            j.motorSpeed = float(1000 * np.sign(a))
-            j.maxMotorTorque = float(1000 * np.clip(np.abs(a), 0, 1))
+            j.motorSpeed = float(MAX_SPEED * np.sign(a))
+            j.maxMotorTorque = float(MAX_TORQUE * np.clip(np.abs(a), 0, 1))
 
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
@@ -202,21 +204,29 @@ class Tentacle(gym.Env):
         return np.array(state), reward, done, {}
 
     def _make_state(self):
+        base = self.tentacle[0]
         head = self.tentacle[len(self.tentacle) - 1]
 
         hx, hy = head.position[0], head.position[1]
         tx, ty = self.target[0].position[0], self.target[0].position[1]
         target_dist = np.sqrt((hx - tx) ** 2 + (hy - ty) ** 2)
 
+        j0_angle = self.joints[0].angle
+        j0_speed = self.joints[0].speed / MAX_SPEED
+        j1_angle = self.joints[1].angle
+        j1_speed = self.joints[1].speed / MAX_SPEED
+        j2_angle = self.joints[2].angle
+        j2_speed = self.joints[2].speed / MAX_SPEED
+
         hvx, hvy = head.linearVelocity.x, head.linearVelocity.y
         head_vel = np.sqrt(hvx ** 2 + hvy ** 2)
 
-        return target_dist, head_vel
+        return target_dist, head_vel, base.angle, j0_angle, j0_speed, j1_angle, j1_speed, j2_angle, j2_speed
 
     def _make_reward(self, state):
         d = state[0] + .0001  # distance to target
         v = state[1] + .0001  # head velocity
-        return 1 / d ** 4 + v / 10 - 1
+        return 1 / d ** 4 + v / 100 - 1
 
     # endregion
 
