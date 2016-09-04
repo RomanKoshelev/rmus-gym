@@ -5,8 +5,8 @@ import gym
 def main():
     # game = "Acrobot-v0"
     # game = "MountainCar-v0"
-    game = "CartPole-v0"
-    # game = "Tentacle-v0"
+    # game = "CartPole-v0"
+    game = "Tentacle-v0"
     env = gym.make(game)
     env.monitor.start('experiments/Tentacle-v0', force=True)
     layer_param_list = [deep_q.RELULayerParams(neurons=200, name="relu1"),

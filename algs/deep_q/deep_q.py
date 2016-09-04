@@ -160,7 +160,7 @@ class Neural_Network:
         # this setup currently targets environments with a 
         # Box observation_space and Discrete actions_space
         # self.input_size = self.env.observation_space.shape[0]
-        self.output_size = self.env.action_space.n
+        self.output_size = self.env.action_space.shape[0]
 
         self.training_input_layer = tf.placeholder(tf.float32,
                                                    [None] + list(self.env.observation_space.shape))
@@ -239,10 +239,24 @@ class Neural_Network:
                 # start off with mostly random actions
                 # slowly take away the random actions
                 # if random.random() > self.random_chance:
-                if np.random.random() < self.random_chance:
+                if np.random.random() < 0.9:  # self.random_chance:
                     action = self.env.action_space.sample()
                 else:
-                    action = output.argmax()
+                    action = output[0]
+                    action = np.clip(action, -1, 1)
+
+                # ==================================
+                def str_arr(arr, tmpl):
+                    return '[' + ', '.join([tmpl % x for x in arr]) + ']'
+
+                log = ''
+                SEP = '   '
+                log += "%2d.%03d" % (i_episode, t) + SEP
+                log += "a:%s" % str_arr(action, "%+4.2f") + SEP
+                log += "s:%s" % str_arr(obs, "%4.1f") + SEP
+                log += "r:%3.0f" % score
+                print(log)
+                # ==================================
 
                 newobs, reward, done, info = self.env.step(action)
 
@@ -286,7 +300,7 @@ class Neural_Network:
         for i, run in enumerate(selection):
             obs, action, reward, newobs, done = run
 
-            chosen_q_mask[i][action] = 1.
+            # chosen_q_mask[i][action] = 1.
 
             # Q learning update step 
             # Q_now = reward + (discout * future_Q)
@@ -294,8 +308,7 @@ class Neural_Network:
             if not done:
                 # no future Q if action was terminal
                 target_q[i] += (
-                    training_params.discount_rate
-                    * next_q_value[i])
+                    training_params.discount_rate * next_q_value[i])
 
         # print inputs
         _, summary = self.sess.run([self.train_node, self.summary],
@@ -340,5 +353,4 @@ class DuelDualQ(Neural_Network):
         #        self.loss += 0.001 * tf.reduce_sum(tf.square(w))
 
         # Adam has a built in learnig rate decay
-        self.train_node = tf.train.AdamOptimizer(
-            1e-3).minimize(self.loss)
+        self.train_node = tf.train.AdamOptimizer(1e-3).minimize(self.loss)

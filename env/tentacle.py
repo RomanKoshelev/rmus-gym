@@ -297,7 +297,7 @@ def main():
             print(log)
         step += 1
 
-        if done or step > 3000:
+        if done or step > 300:
             break
 
 
