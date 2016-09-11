@@ -41,7 +41,7 @@ class Brick(gym.Env):
         self.segments = None
 
         self.action_space = spaces.Box(low=-1, high=1, shape=(1,))  # impulse x
-        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(2,))  # dx, vx
+        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(3,))  # dx, vx, y
 
         self._reset()
 
@@ -75,7 +75,7 @@ class Brick(gym.Env):
 
         W, H = self._world_size()
         rw = np.random.random()
-        target_pos = (rw*W, GROUND_HEIGHT + 1.5)
+        target_pos = ((.25 + rw * .5) * W, GROUND_HEIGHT + 1.5)
 
         self._create_ground()
         self._create_segments()
@@ -99,7 +99,7 @@ class Brick(gym.Env):
 
     def _create_target(self, x, y):
         self.target = []
-        r = .1
+        r = .2
         t = self.world.CreateStaticBody(
             position=(x, y),
             fixtures=fixtureDef(
@@ -126,7 +126,7 @@ class Brick(gym.Env):
         w = sdef['w']
         h = sdef['h']
         x = W / 2 - w / 2
-        ini_y = 2
+        ini_y = .5
         y = GROUND_HEIGHT + ini_y if parent is None else parent.ini['y'] + parent.ini['h']
         d = sdef['d']
         s = self.world.CreateDynamicBody(
@@ -148,7 +148,6 @@ class Brick(gym.Env):
     # region Processing
 
     def _step(self, action):
-        assert self.action_space.contains(action), "Invalid action %r (%s)" % (action, type(action))
         SIDE_ENGINE_POWER = 100
         base = self.segments[0]
 
@@ -158,20 +157,24 @@ class Brick(gym.Env):
 
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
-        reward = self._make_reward(state)
+        reward = self._make_reward(state, action)
         done = False
         return np.array(state), reward, done, {}
 
     def _make_state(self):
         dx = self.target[0].position[0] - self.segments[0].worldCenter[0]
         vx = self.segments[0].linearVelocity[0]
-        s = [dx, vx]
+        y = self.segments[0].worldCenter[1]
+        s = [dx, vx, y]
         return s
 
-    def _make_reward(self, state):
-        d = state[0]**2 + 1.e-10
-        r = 1/d
-        return r
+    def _make_reward(self, state, action):
+        (dx, vx, y) = state
+        cost_dist = dx ** 2
+        cost_force = action[0] ** 2
+        cost_pose = y ** 2
+        cost = cost_dist + cost_force + cost_pose
+        return -cost
 
     # endregion
 
@@ -227,8 +230,8 @@ def sample_action(env, state):
     s = np.sign(state[0])
     v = state[1]
     d = abs(state[0])
-    d = min(d, 10.)/10
-    a = s*d - v/10
+    d = min(d, 10.) / 10
+    a = s * d - v / 10
     return np.array([a])
 
 

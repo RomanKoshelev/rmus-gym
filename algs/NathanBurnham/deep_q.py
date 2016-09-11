@@ -139,7 +139,7 @@ class DuelLayersParams:
 class Training_Params:
     def __init__(self):
         self.initial_random_chance = 1.
-        self.random_decay = 0.95  # 0.9925
+        self.random_decay = 0.9925
         self.discount_rate = 0.95
         self.memory_size = 10000
         self.train_freq = 8
@@ -238,7 +238,7 @@ class Neural_Network:
                 # start off with mostly random actions
                 # slowly take away the random actions
                 # if random.random() > self.random_chance:
-                if np.random.random() < 0.9:  # self.random_chance:
+                if np.random.random() < self.random_chance:
                     action = self.env.action_space.sample()
                 else:
                     action = output[0]
@@ -281,7 +281,7 @@ class Neural_Network:
             self.random_chance *= training_params.random_decay
 
             # how did we do?
-            print "Episode ", i_episode, "\tScore ", score, "\tRandom ", self.random_chance
+            print ("Episode: %4d  :  score: %12.2f  :  random:  %.4f" % (i_episode, score, self.random_chance))
 
     def minibatch(self, training_params):
         # learn a batch of runs

@@ -1,16 +1,16 @@
 TODO:
 
-> implement Brick env
-
-
-- select alg:
-  - https://gym.openai.com/evaluations/eval_xjuUFdvrQR68YWvUqsjKPQ#writeup
+- implement alg:
+  > https://gym.openai.com/evaluations/eval_xjuUFdvrQR68YWvUqsjKPQ#writeup
   - https://gym.openai.com/evaluations/eval_i3lTYeUTW27Q0bBAjAvSw
   - https://gym.openai.com/evaluations/eval_RE77KlTNTvCGzTgtm0Qqg
   - https://github.com/SimonRamstedt/ddpg
   - https://github.com/songrotek/DDPG
   - find and read TNPG
   - find and read TRPO
+
+- select alg
+- improve model
 
 - read:
  - http://arxiv.org/pdf/1509.02971v5.pdf
@@ -22,10 +22,9 @@ TODO:
 
 view:
 - http://videolectures.net/rldm2015_silver_reinforcement_learning/
-
-- implement selected alg
+- selected alg
 
 
 
 DONE:
--
++ implement Brick env

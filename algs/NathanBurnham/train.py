@@ -6,7 +6,7 @@ def main():
     # game = "Acrobot-v0"
     # game = "MountainCar-v0"
     # game = "CartPole-v0"
-    game = "Tentacle-v0"
+    game = "Brick-v0"
     env = gym.make(game)
     env.monitor.start('experiments/Tentacle-v0', force=True)
     layer_param_list = [deep_q.RELULayerParams(neurons=200, name="relu1"),
@@ -36,7 +36,7 @@ def main():
 
     training_params = deep_q.Training_Params()
     training_params.max_episode = 100000000
-    training_params.max_step = 999
+    training_params.max_step = 250
     training_params.show_freq = 10
     training_params.memory_size = 200000
     training_params.random_decay = .999
