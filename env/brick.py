@@ -17,6 +17,7 @@ VIEWPORT_H = 600
 GROUND_HEIGHT = VIEWPORT_H / SCALE / 6
 GROUND_MASK = 0x001
 SEGMENT_MASK = 0x002
+TARGET_MASK = 0x004
 
 
 # endregion
@@ -40,7 +41,7 @@ class Brick(gym.Env):
         self.segments = None
 
         self.action_space = spaces.Box(low=-1, high=1, shape=(1,))  # impulse x
-        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(1,))  # dx
+        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(2,))  # dx, vx
 
         self._reset()
 
@@ -71,9 +72,10 @@ class Brick(gym.Env):
     def _reset(self):
         self._destroy()
         self.drawlist = []
-        W, H = self._world_size()
 
-        target_pos = (W / 2 - 3, GROUND_HEIGHT + 2)
+        W, H = self._world_size()
+        rw = np.random.random()
+        target_pos = (rw*W, GROUND_HEIGHT + 1.5)
 
         self._create_ground()
         self._create_segments()
@@ -124,7 +126,7 @@ class Brick(gym.Env):
         w = sdef['w']
         h = sdef['h']
         x = W / 2 - w / 2
-        ini_y = 5
+        ini_y = 2
         y = GROUND_HEIGHT + ini_y if parent is None else parent.ini['y'] + parent.ini['h']
         d = sdef['d']
         s = self.world.CreateDynamicBody(
@@ -133,7 +135,8 @@ class Brick(gym.Env):
                 shape=polygonShape(vertices=[(0, 0), (0, h), (w, h), (w, 0)]),
                 density=d,
                 categoryBits=SEGMENT_MASK,
-                maskBits=GROUND_MASK
+                maskBits=GROUND_MASK,
+                friction=0.003
             ))
         s.color1, s.color2 = (0.4, 0.4, 0.4), (0.3, 0.3, 0.3)
         s.ini = {'x': x, 'y': y, 'w': w, 'h': h}
@@ -150,7 +153,8 @@ class Brick(gym.Env):
         base = self.segments[0]
 
         impulse_pos = (base.position[0], base.position[1])
-        self.lander.ApplyLinearImpulse((ox * SIDE_ENGINE_POWER, 0), impulse_pos, True)
+        ox = action[0]
+        base.ApplyLinearImpulse((ox * SIDE_ENGINE_POWER, 0), impulse_pos, True)
 
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
@@ -159,13 +163,14 @@ class Brick(gym.Env):
         return np.array(state), reward, done, {}
 
     def _make_state(self):
-        target_dx = self.target[0].position[0] - self.segments[0].position[0]
-        s = [target_dx]
+        dx = self.target[0].position[0] - self.segments[0].worldCenter[0]
+        vx = self.segments[0].linearVelocity[0]
+        s = [dx, vx]
         return s
 
     def _make_reward(self, state):
         d = state[0]**2 + 1.e-10
-        r = 1-1/d
+        r = 1/d
         return r
 
     # endregion
@@ -219,7 +224,12 @@ class Brick(gym.Env):
 
 def sample_action(env, state):
     assert env.observation_space.contains(state), "Invalid state %r (%s)" % (state, type(state))
-    return env.action_space.sample()
+    s = np.sign(state[0])
+    v = state[1]
+    d = abs(state[0])
+    d = min(d, 10.)/10
+    a = s*d - v/10
+    return np.array([a])
 
 
 def main():
@@ -242,12 +252,12 @@ def main():
             SEP = '   :   '
             log += "step: %3d" % step + SEP
             log += "act: %s" % str_arr(a, "%+4.2f") + SEP
-            log += "state: %s" % str_arr(s, "%4.2f") + SEP
+            log += "state: %s" % str_arr(s, "%+4.2f") + SEP
             log += "reward: %4.1f" % r
             print(log)
         step += 1
 
-        if done or step > 300:
+        if done:
             break
 
 
