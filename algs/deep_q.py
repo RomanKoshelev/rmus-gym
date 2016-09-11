@@ -139,7 +139,7 @@ class DuelLayersParams:
 class Training_Params:
     def __init__(self):
         self.initial_random_chance = 1.
-        self.random_decay = 0.9925
+        self.random_decay = 0.95  # 0.9925
         self.discount_rate = 0.95
         self.memory_size = 10000
         self.train_freq = 8
@@ -149,7 +149,7 @@ class Training_Params:
         self.max_step = 199
         self.sess = None
         self.show_display = True
-        self.show_freq = 10
+        self.show_freq = 1
 
 
 class Neural_Network:
@@ -252,9 +252,9 @@ class Neural_Network:
                 SEP = '   '
                 log += "%2d.%03d" % (i_episode, t) + SEP
                 log += "a:%s" % str_arr(action, "%+4.2f") + SEP
-                log += "s:%s" % str_arr(obs, "%4.1f") + SEP
+                log += "s:%s" % str_arr(obs, "%4.2f") + SEP
                 log += "r=%+06.1f" % score
-                print(log)
+                # print(log)
                 # ==================================
 
                 newobs, reward, done, info = self.env.step(action)
