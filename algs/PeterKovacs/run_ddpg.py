@@ -43,7 +43,7 @@ buff = ReplayBuffer(BUFFER_SIZE)
 
 env.monitor.start('experiments/' + ENVIRONMENT_NAME, force=True)
 
-for ep in range(1000):
+for ep in range(10000):
     # open up a game state
     s_t, r_0, done = env.reset(), 0, False
 

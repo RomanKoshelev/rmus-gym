@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import Box2D
+import math
 import gym
 
 import numpy as np
@@ -18,6 +19,9 @@ GROUND_HEIGHT = VIEWPORT_H / SCALE / 6
 GROUND_MASK = 0x001
 SEGMENT_MASK = 0x002
 TARGET_MASK = 0x004
+
+TARGET_HEIGHT = 4.0
+OBS_SHAPE = shape = (9,)  # d, x, y, a, vx, vy, va, tx, ty
 
 
 # endregion
@@ -41,7 +45,7 @@ class Brick(gym.Env):
         self.segments = None
 
         self.action_space = spaces.Box(low=-1, high=1, shape=(1,))  # impulse x
-        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(7,))  # d, x, y, a, vx, vy, va
+        self.observation_space = spaces.Box(low=-1000, high=1000, shape=OBS_SHAPE)
 
         self._reset()
 
@@ -75,7 +79,7 @@ class Brick(gym.Env):
 
         W, H = self._world_size()
         rw = np.random.random()
-        target_pos = ((.1 + rw * .8) * W, GROUND_HEIGHT + 2)
+        target_pos = ((.2 + rw * .6) * W, GROUND_HEIGHT + TARGET_HEIGHT)
 
         self._create_ground()
         self._create_segments()
@@ -85,11 +89,11 @@ class Brick(gym.Env):
 
     def _create_ground(self):
         self.ground = []
-        shape = [(-100, -100), (100, -100), (100, GROUND_HEIGHT), (-100, GROUND_HEIGHT)]
+        ground_shape = [(-100, -100), (100, -100), (100, GROUND_HEIGHT), (-100, GROUND_HEIGHT)]
         f = 2.5
         t = self.world.CreateStaticBody(
             fixtures=fixtureDef(
-                shape=polygonShape(vertices=shape),
+                shape=polygonShape(vertices=ground_shape),
                 categoryBits=GROUND_MASK,
                 friction=f
             ))
@@ -115,7 +119,7 @@ class Brick(gym.Env):
         self.joints = []
 
         seg_def = [
-            {'w': 4., 'h': 1., 'd': 5.}
+            {'w': 8., 'h': 1., 'd': 5.}
         ]
 
         s0 = self._segment(seg_def[0])
@@ -135,7 +139,7 @@ class Brick(gym.Env):
                 shape=polygonShape(vertices=[(0, 0), (0, h), (w, h), (w, 0)]),
                 density=d,
                 categoryBits=SEGMENT_MASK,
-                maskBits=GROUND_MASK,
+                maskBits=GROUND_MASK | TARGET_MASK,
                 friction=0.003
             ))
         s.color1, s.color2 = (0.4, 0.4, 0.4), (0.3, 0.3, 0.3)
@@ -161,27 +165,33 @@ class Brick(gym.Env):
         done = False
         return np.array(state), reward, done, {}
 
+    def print_state(self, state):
+        print(reduce(lambda a, s: a + "%7.2f" % s, state, ""))
+
     def _make_state(self):
-        d = self.target[0].position[0] - self.segments[0].worldCenter[0]
         x = self.segments[0].worldCenter[0]
         y = self.segments[0].worldCenter[1]
-        a = self.segments[0].angle
+        a = self.segments[0].angle % (2 * math.pi)
         vx = self.segments[0].linearVelocity[0]
         vy = self.segments[0].linearVelocity[1]
         va = self.segments[0].angularVelocity
-        s = [d, x, y, a, vx, vy, va]
+        tx = self.target[0].position[0]
+        ty = self.target[0].position[1]
+        d = math.sqrt((x - tx) ** 2 + (y - ty) ** 2)
+        s = [d, x, y, a, vx, vy, va, tx, ty]
+        # self.print_state(s)
         return s
 
     def _make_reward(self, state, action):
-        (d, x, y, a, vx, vy, va) = state
+        (d, x, y, a, vx, vy, va, tx, ty) = state
         cost_dist = abs(d)
         cost_act = abs(action[0])
-        cost_vel = abs(vx) + 0 * abs(vy) + 0 * abs(va)
-        cost_pos = 1 * abs(y) + 0 * abs(a)
-        cost = 1 * cost_dist + \
-               .1 * cost_act + \
-               .1 * cost_vel + \
-               .01 * cost_pos
+        cost_vel = .1 * abs(vx) + 0.01 * abs(vy) + 0.5 * abs(va)
+        cost_pos = .0 * abs(y) + 0.1 * abs(a - 2 * math.pi)
+        cost = 1.0 * cost_dist + \
+               0.5 * cost_act + \
+               0.1 * cost_vel + \
+               0.5 * cost_pos
 
         return -cost
 
