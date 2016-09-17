@@ -41,7 +41,7 @@ class Brick(gym.Env):
         self.segments = None
 
         self.action_space = spaces.Box(low=-1, high=1, shape=(1,))  # impulse x
-        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(6,))  # dx, vx, y, vy, a, va
+        self.observation_space = spaces.Box(low=-1000, high=1000, shape=(7,))  # d, x, y, a, vx, vy, va
 
         self._reset()
 
@@ -75,7 +75,7 @@ class Brick(gym.Env):
 
         W, H = self._world_size()
         rw = np.random.random()
-        target_pos = ((.25 + rw * .5) * W, GROUND_HEIGHT + 1.5)
+        target_pos = ((.1 + rw * .8) * W, GROUND_HEIGHT + 2)
 
         self._create_ground()
         self._create_segments()
@@ -126,7 +126,7 @@ class Brick(gym.Env):
         w = sdef['w']
         h = sdef['h']
         x = W / 2 - w / 2
-        ini_y = .5
+        ini_y = 1 + 5 * np.random.random()
         y = GROUND_HEIGHT + ini_y if parent is None else parent.ini['y'] + parent.ini['h']
         d = sdef['d']
         s = self.world.CreateDynamicBody(
@@ -162,21 +162,27 @@ class Brick(gym.Env):
         return np.array(state), reward, done, {}
 
     def _make_state(self):
-        dx = self.target[0].position[0] - self.segments[0].worldCenter[0]
+        d = self.target[0].position[0] - self.segments[0].worldCenter[0]
+        x = self.segments[0].worldCenter[0]
+        y = self.segments[0].worldCenter[1]
+        a = self.segments[0].angle
         vx = self.segments[0].linearVelocity[0]
         vy = self.segments[0].linearVelocity[1]
-        a = self.segments[0].angle
         va = self.segments[0].angularVelocity
-        y = self.segments[0].worldCenter[1]
-        s = [dx, vx, y, vy, a, va]
+        s = [d, x, y, a, vx, vy, va]
         return s
 
     def _make_reward(self, state, action):
-        (dx, vx, y, vy, a, va) = state
-        cost_dist = abs(dx)
-        cost_force = abs(action[0]) + abs(vx) + abs(vy) + abs(va)
-        cost_pose = - abs(y) if abs(va) <= 0.1 and abs(vy) <= 0.1 and abs(vx) <= 0.1 and abs(action[0]) < 0.01 else 0.
-        cost = cost_dist + cost_force * 0.1 + cost_pose * 10
+        (d, x, y, a, vx, vy, va) = state
+        cost_dist = abs(d)
+        cost_act = abs(action[0])
+        cost_vel = abs(vx) + 0 * abs(vy) + 0 * abs(va)
+        cost_pos = 1 * abs(y) + 0 * abs(a)
+        cost = 1 * cost_dist + \
+               .1 * cost_act + \
+               .1 * cost_vel + \
+               .01 * cost_pos
+
         return -cost
 
     # endregion
