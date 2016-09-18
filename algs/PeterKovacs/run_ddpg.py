@@ -22,7 +22,7 @@ LRA = 0.0001
 LRC = 0.001
 # ENVIRONMENT_NAME
 # ENVIRONMENT_NAME = 'Pendulum-v0'
-ENVIRONMENT_NAME = 'Brick-v0'
+ENVIRONMENT_NAME = 'Tentacle-v0'
 # L2 REGULARISATION
 L2C = 0.01
 L2A = 0
@@ -59,6 +59,7 @@ for ep in range(10000):
 
         # store transition in replay buffer
         buff.add(s_t, a_t[0], r_t, s_t1, done)
+
         # sample a random minibatch of N transitions (si, ai, ri, si+1) from replay buffer
         batch = buff.getBatch(BATCH_SIZE)
         states = np.asarray([e[0] for e in batch])

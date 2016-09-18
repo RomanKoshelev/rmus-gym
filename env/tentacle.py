@@ -18,9 +18,17 @@ GROUND_HEIGHT = VIEWPORT_H / SCALE / 6
 GROUND_MASK = 0x001
 SEGMENT_MASK = 0x002
 TARGET_MASK = 0x004
-MAX_SPEED = 1000
+
+# ------------------------------------
+MAX_SPEED = 5
 MAX_TORQUE = 1000
 
+SEGMENTS = [
+    {'w': 4., 'h': 1., 'd': 50.},
+    {'w': .5, 'h': 4., 'd': .5},
+    {'w': .4, 'h': 3., 'd': .5},
+    {'w': .3, 'h': 2., 'd': .5}
+]
 
 # endregion
 
@@ -56,7 +64,20 @@ class Tentacle(gym.Env):
     # --------------------------------------------------------------------------------------------------------------
     # region Creation
 
+    def _destroy(self):
+        if not self.ground:
+            return
+
+        def destroy_body(arr):
+            for b in arr:
+                self.world.DestroyBody(b)
+
+        destroy_body(self.ground)
+        destroy_body(self.target)
+        destroy_body(self.tentacle)
+
     def _reset(self):
+        self._destroy()
         self.drawlist = []
         W, H = self._world_size()
 
@@ -83,7 +104,7 @@ class Tentacle(gym.Env):
 
     def _create_target(self, x, y):
         self.target = []
-        r = .1
+        r = .2
         t = self.world.CreateStaticBody(
             position=(x, y),
             fixtures=fixtureDef(
@@ -98,17 +119,10 @@ class Tentacle(gym.Env):
         self.tentacle = []
         self.joints = []
 
-        segdef = [
-            {'w': 4., 'h': 1., 'd': 5.},
-            {'w': .5, 'h': 4., 'd': .5},
-            {'w': .4, 'h': 3., 'd': .5},
-            {'w': .3, 'h': 2., 'd': .5}
-        ]
-
-        s0 = self._segment(segdef[0])
-        s1 = self._segment(segdef[1], parent=s0)
-        s2 = self._segment(segdef[2], parent=s1)
-        s3 = self._segment(segdef[3], parent=s2)
+        s0 = self._segment(SEGMENTS[0])
+        s1 = self._segment(SEGMENTS[1], parent=s0)
+        s2 = self._segment(SEGMENTS[2], parent=s1)
+        s3 = self._segment(SEGMENTS[3], parent=s2)
         sh = self._head(parent=s3)
         self.tentacle.extend([s0, s1, s2, s3, sh])
 
@@ -120,7 +134,7 @@ class Tentacle(gym.Env):
 
     def _head(self, parent):
         W, H = self._world_size()
-        r = .12
+        r = .15
         x = W / 2
         y = parent.ini['y'] + parent.ini['h']
         s = self.world.CreateDynamicBody(
@@ -129,7 +143,7 @@ class Tentacle(gym.Env):
                 shape=circleShape(radius=r, pos=(0, 0)),
                 density=0.1,
                 categoryBits=SEGMENT_MASK,
-                maskBits=GROUND_MASK
+                maskBits=GROUND_MASK | TARGET_MASK
             ))
         s.color1, s.color2 = (0.0, 0.9, 0.), (0.0, 0.5, 0.)
         s.ini = {'x': x, 'y': y, 'w': 2 * r, 'h': 2 * r}
@@ -140,17 +154,17 @@ class Tentacle(gym.Env):
         w = sdef['w']
         h = sdef['h']
         x = W / 2 - w / 2
-        y = GROUND_HEIGHT + 5 if parent is None else parent.ini['y'] + parent.ini['h']
+        y = GROUND_HEIGHT if parent is None else parent.ini['y'] + parent.ini['h']
         d = sdef['d']
-        r = 0.1
         s = self.world.CreateDynamicBody(
             position=(x, y),
             fixtures=fixtureDef(
                 shape=polygonShape(vertices=[(0, 0), (0, h), (w, h), (w, 0)]),
                 density=d,
                 categoryBits=SEGMENT_MASK,
-                maskBits=GROUND_MASK,
-                restitution=r
+                maskBits=GROUND_MASK | TARGET_MASK,
+                friction=0.3,
+                restitution=3.
             ))
         s.color1, s.color2 = (0.4, 0.4, 0.4), (0.3, 0.3, 0.3)
         s.ini = {'x': x, 'y': y, 'w': w, 'h': h}
@@ -188,9 +202,6 @@ class Tentacle(gym.Env):
     # region Processing
 
     def _step(self, action):
-        assert self.action_space.contains(action), "Invalid action %r (%s)" % (action, type(action))
-        assert len(action) == len(self.joints), "Action size: %d, joints: %d" % (len(action), len(self.joints))
-
         for i in range(len(self.joints)):
             j = self.joints[0]
             a = action[i]
@@ -224,9 +235,12 @@ class Tentacle(gym.Env):
         return target_dist, head_vel, base.angle, j0_angle, j0_speed, j1_angle, j1_speed, j2_angle, j2_speed
 
     def _make_reward(self, state):
-        d = state[0] + .0001  # distance to target
-        v = state[1] + .0001  # head velocity
-        return 1 / d ** 4 + v / 100 - 1
+        (d, v) = state[0], state[1]
+        cost_dist = d
+        cost_vel = v
+        cost = 1. * cost_dist + \
+               0. * cost_vel
+        return -cost
 
     # endregion
 
@@ -307,7 +321,7 @@ def main():
             print(log)
         step += 1
 
-        if done or step > 300:
+        if done or step > 3000:
             break
 
 

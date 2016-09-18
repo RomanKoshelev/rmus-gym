@@ -187,7 +187,7 @@ class Brick(gym.Env):
         cost_dist = abs(d)
         cost_act = abs(action[0])
         cost_vel = .1 * abs(vx) + 0.01 * abs(vy) + 0.5 * abs(va)
-        cost_pos = .0 * abs(y) + 0.1 * abs(a - 2 * math.pi)
+        cost_pos = .0 * abs(y) + 10.1 * abs(a - math.pi / 2)
         cost = 1.0 * cost_dist + \
                0.5 * cost_act + \
                0.1 * cost_vel + \
