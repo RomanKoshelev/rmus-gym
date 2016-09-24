@@ -21,7 +21,7 @@ TARGET_MASK = 0x004
 
 # ------------------------------------
 MAX_SPEED = 1
-MAX_TORQUE = 100000
+MAX_TORQUE = 10000
 
 SEGMENTS = [
     {'w': 4., 'h': 1., 'd': 50.},
@@ -171,7 +171,7 @@ class Tentacle(gym.Env):
         return s
 
     def _rev_joint(self, a, b):
-        angle = 1.3
+        angle = 0.9 * np.pi
         torque = 2.2
         speed = .25
         return self.world.CreateJoint(revoluteJointDef(
@@ -203,7 +203,7 @@ class Tentacle(gym.Env):
 
     def _step(self, action):
         for i in range(len(self.joints)):
-            j = self.joints[0]
+            j = self.joints[i]
             a = action[i]
             j.motorSpeed = float(MAX_SPEED * np.sign(a))
             j.maxMotorTorque = float(MAX_TORQUE * np.clip(np.abs(a), 0, 1))
