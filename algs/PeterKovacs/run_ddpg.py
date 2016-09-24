@@ -47,14 +47,14 @@ for ep in range(10000):
     s_t, r_0, done = env.reset(), 0, False
 
     reward = 0
-    noise_rate = 1. / (ep + 1)
 
     # exploration.reset()
-    for t in range(300):
-        if ep % 10 == 0:
+    for t in range(200):
+        if ep % 1 == 0:
             env.render()
 
         # select action according to current policy and exploration noise
+        noise_rate = 1. / (ep + t + 1)
         random_action = 1 - 2 * np.random.randn(action_dim)
         a_t = actor.predict([s_t]) + random_action * noise_rate
 
@@ -98,7 +98,7 @@ for ep in range(10000):
         s_t = s_t1
         reward += r_t
 
-    print ("%3d  Noise = %.4f     Reward = %10.2f  " % (ep, noise_rate, reward))
+    print ("%3d  Reward = %10.2f  " % (ep, reward))
 
 # Dump result info to disk
 env.monitor.close()

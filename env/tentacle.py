@@ -20,8 +20,8 @@ SEGMENT_MASK = 0x002
 TARGET_MASK = 0x004
 
 # ------------------------------------
-MAX_SPEED = 5
-MAX_TORQUE = 1000
+MAX_SPEED = 1
+MAX_TORQUE = 100000
 
 SEGMENTS = [
     {'w': 4., 'h': 1., 'd': 50.},
@@ -163,8 +163,8 @@ class Tentacle(gym.Env):
                 density=d,
                 categoryBits=SEGMENT_MASK,
                 maskBits=GROUND_MASK,
-                friction=0.3,
-                restitution=3.
+                friction=.3,
+                restitution=.3
             ))
         s.color1, s.color2 = (0.4, 0.4, 0.4), (0.3, 0.3, 0.3)
         s.ini = {'x': x, 'y': y, 'w': w, 'h': h}
@@ -239,7 +239,7 @@ class Tentacle(gym.Env):
         cost_dist = d * d
         cost_vel = v
         cost = 1. * cost_dist + \
-               100. * cost_vel
+               0. * cost_vel
         return -cost
 
     # endregion
