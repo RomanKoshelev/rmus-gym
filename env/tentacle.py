@@ -81,7 +81,7 @@ class Tentacle(gym.Env):
         self.drawlist = []
         W, H = self._world_size()
 
-        target_pos = (W / 2 - 3, GROUND_HEIGHT + 7)
+        target_pos = (W / 2 - 4 + 8 * np.random.random(), GROUND_HEIGHT + 8 + 3 * np.random.random())
         self._create_ground()
         self._create_tentacle()
         self._create_target(*target_pos)
@@ -143,7 +143,7 @@ class Tentacle(gym.Env):
                 shape=circleShape(radius=r, pos=(0, 0)),
                 density=0.1,
                 categoryBits=SEGMENT_MASK,
-                maskBits=GROUND_MASK | TARGET_MASK
+                maskBits=GROUND_MASK
             ))
         s.color1, s.color2 = (0.0, 0.9, 0.), (0.0, 0.5, 0.)
         s.ini = {'x': x, 'y': y, 'w': 2 * r, 'h': 2 * r}
@@ -162,7 +162,7 @@ class Tentacle(gym.Env):
                 shape=polygonShape(vertices=[(0, 0), (0, h), (w, h), (w, 0)]),
                 density=d,
                 categoryBits=SEGMENT_MASK,
-                maskBits=GROUND_MASK | TARGET_MASK,
+                maskBits=GROUND_MASK,
                 friction=0.3,
                 restitution=3.
             ))
@@ -236,10 +236,10 @@ class Tentacle(gym.Env):
 
     def _make_reward(self, state):
         (d, v) = state[0], state[1]
-        cost_dist = d
+        cost_dist = d * d
         cost_vel = v
         cost = 1. * cost_dist + \
-               0. * cost_vel
+               100. * cost_vel
         return -cost
 
     # endregion

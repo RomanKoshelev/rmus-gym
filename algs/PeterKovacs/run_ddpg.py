@@ -12,16 +12,15 @@ import timeit
 
 # REPLAY BUFFER CONSTS
 BUFFER_SIZE = 10000
-BATCH_SIZE = 128
+BATCH_SIZE = 512  # 128
 # FUTURE REWARD DECAY
 GAMMA = 0.99
 # TARGET NETWORK UPDATE STEP
 TAU = 0.001
 # LEARNING_RATE
-LRA = 0.0001
-LRC = 0.001
+LRA = 0.0001 / 3
+LRC = 0.001 / 3
 # ENVIRONMENT_NAME
-# ENVIRONMENT_NAME = 'Pendulum-v0'
 ENVIRONMENT_NAME = 'Tentacle-v0'
 # L2 REGULARISATION
 L2C = 0.01
@@ -48,11 +47,16 @@ for ep in range(10000):
     s_t, r_0, done = env.reset(), 0, False
 
     reward = 0
+    noise_rate = 1. / (ep + 1)
+
     # exploration.reset()
-    for t in range(100):
-        env.render()
+    for t in range(300):
+        if ep % 10 == 0:
+            env.render()
+
         # select action according to current policy and exploration noise
-        a_t = actor.predict([s_t]) + (np.random.randn(action_dim) / (ep + t + 1))
+        random_action = 1 - 2 * np.random.randn(action_dim)
+        a_t = actor.predict([s_t]) + random_action * noise_rate
 
         # execute action and observe reward and new state
         s_t1, r_t, done, info = env.step(a_t[0])
@@ -93,7 +97,8 @@ for ep in range(10000):
         # move to next state
         s_t = s_t1
         reward += r_t
-    print ("Episode: %3d      Reward: %14.2f" % (ep, reward))
+
+    print ("%3d  Noise = %.4f     Reward = %10.2f  " % (ep, noise_rate, reward))
 
 # Dump result info to disk
 env.monitor.close()
