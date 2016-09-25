@@ -20,7 +20,7 @@ SEGMENT_MASK = 0x002
 TARGET_MASK = 0x004
 
 # ------------------------------------
-MAX_SPEED = 1
+MAX_SPEED = 2
 MAX_TORQUE = 1000
 
 SEGMENTS = [
@@ -29,6 +29,7 @@ SEGMENTS = [
     {'w': .4, 'h': 3., 'd': .5},
     {'w': .3, 'h': 2., 'd': .5}
 ]
+
 
 # endregion
 
@@ -51,7 +52,7 @@ class Tentacle(gym.Env):
         self.tentacle = None
 
         self.action_space = spaces.Box(low=-1, high=1, shape=(1,))
-        self.observation_space = spaces.Box(low=-100, high=100, shape=(6,))
+        self.observation_space = spaces.Box(low=-100, high=100, shape=(5,))
 
         self._reset()
 
@@ -193,7 +194,7 @@ class Tentacle(gym.Env):
 
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
-        reward = self._make_reward(state, action)
+        reward = self._make_reward(action)
         done = False
         # print_log(action, reward, state)
         return np.array(state), reward, done, {}
@@ -202,26 +203,27 @@ class Tentacle(gym.Env):
         head = self.tentacle[len(self.tentacle) - 1]
         hx, hy = head.position[0], head.position[1]
         tx, ty = self.target[0].position[0], self.target[0].position[1]
-        target_dist = np.sqrt((hx - tx) ** 2 + (hy - ty) ** 2)
+        dx, dy = hx - tx, hy - ty
 
         j0_angle = self.joints[0].angle
         j0_speed = self.joints[0].speed / MAX_SPEED
 
-        return target_dist, \
+        return dx, \
+               dy, \
                np.cos(j0_angle), \
                np.sin(j0_angle), \
-               j0_speed, \
-               hx - tx, \
-               hy - ty
+               j0_speed
 
-    def _make_reward(self, state, action):
-        (d, v) = state[0], state[1]
-        cost_dist = d
+    def _make_reward(self, action):
+        head = self.tentacle[len(self.tentacle) - 1]
+        hx, hy = head.position[0], head.position[1]
+        tx, ty = self.target[0].position[0], self.target[0].position[1]
+        dx, dy = hx - tx, hy - ty
+
+        cost_dist = np.sqrt(dx ** 2 + dy ** 2)
         cost_act = abs(action[0])
-        cost_vel = v
         cost = 100. * cost_dist + \
-               10. * cost_act + \
-               0. * cost_vel
+               10. * cost_act
         return -cost
 
     # endregion
