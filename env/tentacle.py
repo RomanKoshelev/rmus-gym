@@ -21,7 +21,7 @@ TARGET_MASK = 0x004
 
 # ------------------------------------
 MAX_SPEED = 1
-MAX_TORQUE = 10000
+MAX_TORQUE = 1000
 
 SEGMENTS = [
     {'w': 4., 'h': 1., 'd': 50.},
@@ -50,8 +50,8 @@ class Tentacle(gym.Env):
         self.ground = None
         self.tentacle = None
 
-        self.action_space = spaces.Box(low=-1, high=1, shape=(3,))
-        self.observation_space = spaces.Box(low=-100, high=100, shape=(9,))
+        self.action_space = spaces.Box(low=-1, high=1, shape=(1,))
+        self.observation_space = spaces.Box(low=-100, high=100, shape=(6,))
 
         self._reset()
 
@@ -64,28 +64,18 @@ class Tentacle(gym.Env):
     # --------------------------------------------------------------------------------------------------------------
     # region Creation
 
-    def _destroy(self):
-        if not self.ground:
-            return
-
-        def destroy_body(arr):
-            for b in arr:
-                self.world.DestroyBody(b)
-
-        destroy_body(self.ground)
-        destroy_body(self.target)
-        destroy_body(self.tentacle)
-
     def _reset(self):
-        self._destroy()
-        self.drawlist = []
-        W, H = self._world_size()
+        if not self.ground:
+            self.drawlist = []
+            self._create_ground()
+            self._create_tentacle()
+            self._create_target()
+            self.drawlist = self.ground + self.tentacle + self.target
 
-        target_pos = (W / 2 - 4 + 8 * np.random.random(), GROUND_HEIGHT + 8 + 3 * np.random.random())
-        self._create_ground()
-        self._create_tentacle()
-        self._create_target(*target_pos)
-        self.drawlist = self.ground + self.tentacle + self.target
+        W, _ = self._world_size()
+        self.target[0].position[0] = W / 2 - 4 + 8 * np.random.random()
+        self.target[0].position[1] = GROUND_HEIGHT + 5 + 0 * np.random.random()
+
         return np.array(self._make_state())
 
     def _create_ground(self):
@@ -102,11 +92,11 @@ class Tentacle(gym.Env):
         t.color2 = (0., 0.5, 0.)
         self.ground.append(t)
 
-    def _create_target(self, x, y):
+    def _create_target(self):
         self.target = []
         r = .2
         t = self.world.CreateStaticBody(
-            position=(x, y),
+            position=(0, 0),
             fixtures=fixtureDef(
                 shape=circleShape(radius=r, pos=(0, 0)),
                 categoryBits=TARGET_MASK
@@ -121,16 +111,12 @@ class Tentacle(gym.Env):
 
         s0 = self._segment(SEGMENTS[0])
         s1 = self._segment(SEGMENTS[1], parent=s0)
-        s2 = self._segment(SEGMENTS[2], parent=s1)
-        s3 = self._segment(SEGMENTS[3], parent=s2)
-        sh = self._head(parent=s3)
-        self.tentacle.extend([s0, s1, s2, s3, sh])
+        sh = self._head(parent=s1)
+        self.tentacle.extend([s0, s1, sh])
 
-        j01 = self._rev_joint(s0, s1)
-        j12 = self._rev_joint(s1, s2)
-        j23 = self._rev_joint(s2, s3)
-        self._weld_joint(s3, sh)
-        self.joints.extend([j01, j12, j23])
+        j01 = self._rev_joint(s0, s1, 0.33 * np.pi)
+        self._weld_joint(s1, sh)
+        self.joints.extend([j01])
 
     def _head(self, parent):
         W, H = self._world_size()
@@ -170,10 +156,7 @@ class Tentacle(gym.Env):
         s.ini = {'x': x, 'y': y, 'w': w, 'h': h}
         return s
 
-    def _rev_joint(self, a, b):
-        angle = 0.9 * np.pi
-        torque = 2.2
-        speed = .25
+    def _rev_joint(self, a, b, angle):
         return self.world.CreateJoint(revoluteJointDef(
             bodyA=a,
             bodyB=b,
@@ -181,8 +164,8 @@ class Tentacle(gym.Env):
             localAnchorB=(b.ini['w'] / 2, 0),
             enableMotor=True,
             enableLimit=True,
-            maxMotorTorque=torque,
-            motorSpeed=speed,
+            maxMotorTorque=0,
+            motorSpeed=0,
             lowerAngle=-angle,
             upperAngle=angle,
         ))
@@ -210,35 +193,34 @@ class Tentacle(gym.Env):
 
         self.world.Step(timeStep=1.0 / FPS, velocityIterations=6, positionIterations=2)
         state = self._make_state()
-        reward = self._make_reward(state)
+        reward = self._make_reward(state, action)
         done = False
+        # print_log(action, reward, state)
         return np.array(state), reward, done, {}
 
     def _make_state(self):
-        base = self.tentacle[0]
         head = self.tentacle[len(self.tentacle) - 1]
-
         hx, hy = head.position[0], head.position[1]
         tx, ty = self.target[0].position[0], self.target[0].position[1]
         target_dist = np.sqrt((hx - tx) ** 2 + (hy - ty) ** 2)
 
         j0_angle = self.joints[0].angle
         j0_speed = self.joints[0].speed / MAX_SPEED
-        j1_angle = self.joints[1].angle
-        j1_speed = self.joints[1].speed / MAX_SPEED
-        j2_angle = self.joints[2].angle
-        j2_speed = self.joints[2].speed / MAX_SPEED
 
-        hvx, hvy = head.linearVelocity.x, head.linearVelocity.y
-        head_vel = np.sqrt(hvx ** 2 + hvy ** 2)
+        return target_dist, \
+               np.cos(j0_angle), \
+               np.sin(j0_angle), \
+               j0_speed, \
+               hx - tx, \
+               hy - ty
 
-        return target_dist, head_vel, base.angle, j0_angle, j0_speed, j1_angle, j1_speed, j2_angle, j2_speed
-
-    def _make_reward(self, state):
+    def _make_reward(self, state, action):
         (d, v) = state[0], state[1]
-        cost_dist = d * d
+        cost_dist = d
+        cost_act = abs(action[0])
         cost_vel = v
-        cost = 1. * cost_dist + \
+        cost = 100. * cost_dist + \
+               10. * cost_act + \
                0. * cost_vel
         return -cost
 
@@ -309,20 +291,23 @@ def main():
         a = sample_action(env, s)
 
         if step % 10 == 0 or done:
-            def str_arr(arr, tmpl):
-                return '[ ' + ', '.join([tmpl % x for x in arr]) + ' ]'
-
-            log = ''
-            SEP = '   :   '
-            log += "step: %3d" % step + SEP
-            log += "act: %s" % str_arr(a, "%+4.2f") + SEP
-            log += "state: %s" % str_arr(s, "%4.2f") + SEP
-            log += "reward: %4.1f" % r
-            print(log)
+            print_log(a, r, s)
         step += 1
 
         if done or step > 3000:
             break
+
+
+def print_log(a, r, s):
+    def str_arr(arr, tmpl):
+        return '[ ' + ', '.join([tmpl % x for x in arr]) + ' ]'
+
+    log = ''
+    SEP = '   :   '
+    log += "act: %s" % str_arr(a, "%+4.2f") + SEP
+    log += "state: %s" % str_arr(s, "%4.2f") + SEP
+    log += "reward: %4.1f" % r
+    print(log)
 
 
 if __name__ == "__main__":

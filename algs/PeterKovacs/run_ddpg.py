@@ -42,16 +42,15 @@ buff = ReplayBuffer(BUFFER_SIZE)
 
 env.monitor.start('experiments/' + ENVIRONMENT_NAME, force=True)
 
-for ep in range(10000):
+for ep in range(100000):
     # open up a game state
     s_t, r_0, done = env.reset(), 0, False
 
     reward = 0
 
     # exploration.reset()
-    for t in range(200):
-        if ep % 1 == 0:
-            env.render()
+    for t in range(100):
+        env.render()
 
         # select action according to current policy and exploration noise
         noise_rate = 1. / (ep + t + 1)
