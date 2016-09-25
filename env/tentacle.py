@@ -51,8 +51,8 @@ class Tentacle(gym.Env):
         self.ground = None
         self.tentacle = None
 
-        self.action_space = spaces.Box(low=-1, high=1, shape=(1,))
-        self.observation_space = spaces.Box(low=-100, high=100, shape=(5,))
+        self.action_space = spaces.Box(low=-1, high=1, shape=(2,))
+        self.observation_space = spaces.Box(low=-100, high=100, shape=(2 + 2 * 3,))
 
         self._reset()
 
@@ -74,8 +74,8 @@ class Tentacle(gym.Env):
             self.drawlist = self.ground + self.tentacle + self.target
 
         W, _ = self._world_size()
-        self.target[0].position[0] = W / 2 - 4 + 8 * np.random.random()
-        self.target[0].position[1] = GROUND_HEIGHT + 5 + 0 * np.random.random()
+        self.target[0].position[0] = W / 2 - 5 + 10 * np.random.random()
+        self.target[0].position[1] = GROUND_HEIGHT + 3 + 5 * np.random.random()
 
         return np.array(self._make_state())
 
@@ -112,12 +112,14 @@ class Tentacle(gym.Env):
 
         s0 = self._segment(SEGMENTS[0])
         s1 = self._segment(SEGMENTS[1], parent=s0)
-        sh = self._head(parent=s1)
-        self.tentacle.extend([s0, s1, sh])
+        s2 = self._segment(SEGMENTS[2], parent=s1)
+        sh = self._head(parent=s2)
+        self.tentacle.extend([s0, s1, s2, sh])
 
-        j01 = self._rev_joint(s0, s1, 0.33 * np.pi)
-        self._weld_joint(s1, sh)
-        self.joints.extend([j01])
+        j01 = self._rev_joint(s0, s1, 0.50 * np.pi)
+        j12 = self._rev_joint(s1, s2, 0.75 * np.pi)
+        self._weld_joint(s2, sh)
+        self.joints.extend([j01, j12])
 
     def _head(self, parent):
         W, H = self._world_size()
@@ -196,7 +198,6 @@ class Tentacle(gym.Env):
         state = self._make_state()
         reward = self._make_reward(action)
         done = False
-        # print_log(action, reward, state)
         return np.array(state), reward, done, {}
 
     def _make_state(self):
@@ -207,12 +208,17 @@ class Tentacle(gym.Env):
 
         j0_angle = self.joints[0].angle
         j0_speed = self.joints[0].speed / MAX_SPEED
+        j1_angle = self.joints[1].angle
+        j1_speed = self.joints[1].speed / MAX_SPEED
 
         return dx, \
                dy, \
                np.cos(j0_angle), \
                np.sin(j0_angle), \
-               j0_speed
+               j0_speed, \
+               np.cos(j1_angle), \
+               np.sin(j1_angle), \
+               j1_speed
 
     def _make_reward(self, action):
         head = self.tentacle[len(self.tentacle) - 1]
