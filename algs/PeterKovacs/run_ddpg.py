@@ -4,6 +4,7 @@ import gym
 from replay_buffer import ReplayBuffer
 from actor_network import ActorNetwork
 from critic_network import CriticNetwork
+from ou_noise import OUNoise
 import timeit
 
 # https://gym.openai.com/evaluations/eval_xjuUFdvrQR68YWvUqsjKPQ#writeup
@@ -12,14 +13,14 @@ import timeit
 
 # REPLAY BUFFER CONSTS
 BUFFER_SIZE = 10000
-BATCH_SIZE = 512  # 128
+BATCH_SIZE = 128  # 128
 # FUTURE REWARD DECAY
 GAMMA = 0.99
 # TARGET NETWORK UPDATE STEP
 TAU = 0.001  # 0.001
 # LEARNING_RATE
-LRA = 0.01  # 0.0001
-LRC = 0.01  # 0.001
+LRA = 0.0001  # 0.0001
+LRC = 0.001  # 0.001
 # ENVIRONMENT_NAME
 ENVIRONMENT_NAME = 'Tentacle-v0'
 # L2 REGULARISATION
@@ -48,14 +49,14 @@ for ep in range(100000):
 
     reward = 0
 
+    exploration_noise = OUNoise(action_dim)
+
     # exploration.reset()
     for t in range(100):
         env.render()
 
         # select action according to current policy and exploration noise
-        noise_rate = 1. / (ep + t + 1)
-        random_action = 1 - 2 * np.random.randn(action_dim)
-        a_t = actor.predict([s_t]) + random_action * noise_rate
+        a_t = actor.predict([s_t]) + exploration_noise.noise()
 
         # execute action and observe reward and new state
         s_t1, r_t, done, info = env.step(a_t[0])
@@ -97,7 +98,7 @@ for ep in range(100000):
         s_t = s_t1
         reward += r_t
 
-    print ("%3d  Reward = %10.2f  " % (ep, reward))
+    print ("%3d  Reward = %10.0f  " % (ep, reward))
 
 # Dump result info to disk
 env.monitor.close()

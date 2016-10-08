@@ -51,8 +51,8 @@ class Tentacle(gym.Env):
         self.ground = None
         self.tentacle = None
 
-        self.action_space = spaces.Box(low=-1, high=1, shape=(2,))
-        self.observation_space = spaces.Box(low=-100, high=100, shape=(2 + 2 * 3,))
+        self.action_space = spaces.Box(low=-1, high=1, shape=(3,))
+        self.observation_space = spaces.Box(low=-100, high=100, shape=(2 + 3 * 3,))
 
         self._reset()
 
@@ -65,7 +65,21 @@ class Tentacle(gym.Env):
     # --------------------------------------------------------------------------------------------------------------
     # region Creation
 
+    def _destroy(self):
+        if not self.ground:
+            return
+
+        def destroy_body(arr):
+            for b in arr:
+                self.world.DestroyBody(b)
+
+        destroy_body(self.ground)
+        destroy_body(self.target)
+        destroy_body(self.tentacle)
+        self.ground = None
+
     def _reset(self):
+        self._destroy()
         if not self.ground:
             self.drawlist = []
             self._create_ground()
@@ -74,8 +88,8 @@ class Tentacle(gym.Env):
             self.drawlist = self.ground + self.tentacle + self.target
 
         W, _ = self._world_size()
-        self.target[0].position[0] = W / 2 - 5 + 10 * np.random.random()
-        self.target[0].position[1] = GROUND_HEIGHT + 3 + 5 * np.random.random()
+        self.target[0].position[0] = W / 2 - 6 + 12 * np.random.random()
+        self.target[0].position[1] = GROUND_HEIGHT + 2 + 8 * np.random.random()
 
         return np.array(self._make_state())
 
@@ -110,18 +124,20 @@ class Tentacle(gym.Env):
         self.tentacle = []
         self.joints = []
 
-        s0 = self._segment(SEGMENTS[0])
-        s1 = self._segment(SEGMENTS[1], parent=s0)
-        s2 = self._segment(SEGMENTS[2], parent=s1)
-        sh = self._head(parent=s2)
-        self.tentacle.extend([s0, s1, s2, sh])
+        s0 = self._make_segment(SEGMENTS[0])
+        s1 = self._make_segment(SEGMENTS[1], parent=s0)
+        s2 = self._make_segment(SEGMENTS[2], parent=s1)
+        s3 = self._make_segment(SEGMENTS[3], parent=s2)
+        sh = self._make_head(parent=s3)
+        self.tentacle.extend([s0, s1, s2, s3, sh])
 
         j01 = self._rev_joint(s0, s1, 0.50 * np.pi)
         j12 = self._rev_joint(s1, s2, 0.75 * np.pi)
-        self._weld_joint(s2, sh)
-        self.joints.extend([j01, j12])
+        j13 = self._rev_joint(s2, s3, 0.75 * np.pi)
+        self._weld_joint(s3, sh)
+        self.joints.extend([j01, j12, j13])
 
-    def _head(self, parent):
+    def _make_head(self, parent):
         W, H = self._world_size()
         r = .15
         x = W / 2
@@ -138,7 +154,7 @@ class Tentacle(gym.Env):
         s.ini = {'x': x, 'y': y, 'w': 2 * r, 'h': 2 * r}
         return s
 
-    def _segment(self, sdef, parent=None):
+    def _make_segment(self, sdef, parent=None):
         W, H = self._world_size()
         w = sdef['w']
         h = sdef['h']
@@ -210,6 +226,8 @@ class Tentacle(gym.Env):
         j0_speed = self.joints[0].speed / MAX_SPEED
         j1_angle = self.joints[1].angle
         j1_speed = self.joints[1].speed / MAX_SPEED
+        j2_angle = self.joints[2].angle
+        j2_speed = self.joints[2].speed / MAX_SPEED
 
         return dx, \
                dy, \
@@ -218,7 +236,10 @@ class Tentacle(gym.Env):
                j0_speed, \
                np.cos(j1_angle), \
                np.sin(j1_angle), \
-               j1_speed
+               j1_speed, \
+               np.cos(j2_angle), \
+               np.sin(j2_angle), \
+               j2_speed
 
     def _make_reward(self, action):
         head = self.tentacle[len(self.tentacle) - 1]
@@ -226,10 +247,10 @@ class Tentacle(gym.Env):
         tx, ty = self.target[0].position[0], self.target[0].position[1]
         dx, dy = hx - tx, hy - ty
 
-        cost_dist = np.sqrt(dx ** 2 + dy ** 2)
+        cost_dist = dx ** 2 + dy ** 2
         cost_act = abs(action[0])
-        cost = 100. * cost_dist + \
-               10. * cost_act
+        cost = 1. * cost_dist + \
+               0.01 * cost_act
         return -cost
 
     # endregion

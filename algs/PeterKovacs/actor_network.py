@@ -80,7 +80,7 @@ class ActorNetwork(object):
         # computation
         h1 = tf.nn.relu(tf.matmul(state, W1) + b1)
         h2 = tf.nn.relu(tf.matmul(h1, W2) + b2)
-        out = tf.identity(tf.matmul(h2, W3) + b3)
+        out = tf.tanh(tf.matmul(h2, W3) + b3)
 
         return state, out, [W1, b1, W2, b2, W3, b3]
 
