@@ -1,7 +1,6 @@
 TODO:
 
 - test stevenjg's agent
-- limit GPU memory usage for the TF session to run several tests simultatiously
 -
 
 
@@ -17,6 +16,7 @@ view:
 
 
 DONE:
++ limit GPU memory usage for the TF session to run several tests simultatiously
 + add big reward for the touching
 + implement Brick env
   + https://gym.openai.com/evaluations/eval_xjuUFdvrQR68YWvUqsjKPQ#writeup

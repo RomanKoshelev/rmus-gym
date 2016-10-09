@@ -50,6 +50,7 @@ class Tentacle(gym.Env):
         self.world = Box2D.b2World()
         self.ground = None
         self.tentacle = None
+        self.need_destroy = False
 
         self.action_space = spaces.Box(low=-1, high=1, shape=(3,))
         self.observation_space = spaces.Box(low=-100, high=100, shape=(2 + 3 * 3,))
@@ -79,7 +80,10 @@ class Tentacle(gym.Env):
         self.ground = None
 
     def _reset(self):
-        self._destroy()
+        if self.need_destroy:
+            self._destroy()
+            self.need_destroy = False
+
         if not self.ground:
             self.drawlist = []
             self._create_ground()
@@ -214,6 +218,10 @@ class Tentacle(gym.Env):
         state = self._make_state()
         reward = self._make_reward(action)
         done = False
+
+        if self.tentacle[len(self.tentacle) - 1].position[1] < GROUND_HEIGHT + 1.:  # head near ground
+            self.need_destroy = True
+
         return np.array(state), reward, done, {}
 
     def _make_state(self):
@@ -253,7 +261,7 @@ class Tentacle(gym.Env):
 
         rw_touch = + 100. * ((r / max(d, r))**3)
         rw_dist = - 10. * (d ** 2)
-        rw_act = - 0.001 * (np.sum(abs(action)))  # type: float
+        rw_act = - 1. * (np.sum(np.abs(action) * (0.9, 0.3, 0.1)))  # type: float
 
         # print("%+8.2f %+8.2f %+8.2f " % (rw_touch, rw_dist, rw_act))
 

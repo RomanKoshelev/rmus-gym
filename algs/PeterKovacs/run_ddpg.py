@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 import gym
@@ -12,8 +13,9 @@ import timeit
 # https://www.youtube.com/watch?v=tJBIqkC1wWM&feature=youtu.be
 
 # REPLAY BUFFER CONSTS
-BUFFER_SIZE = 10000  # 10000
-BATCH_SIZE = 128  # 128
+BUFFER_SIZE = 100 * 1000  # 10000
+BUFFER_START_SIZE = 0  # 10000
+BATCH_SIZE = 64  # 128
 # FUTURE REWARD DECAY
 GAMMA = 0.99  # 0.99
 # TARGET NETWORK UPDATE STEP
@@ -25,7 +27,7 @@ LRC = 0.001  # 0.001
 ENVIRONMENT_NAME = 'Tentacle-v0'
 # L2 REGULARISATION
 L2C = 0.01
-L2A = 0
+L2A = 0.00001  # 0.
 
 env = gym.make(ENVIRONMENT_NAME)
 action_dim = env.action_space.shape[0]
@@ -34,16 +36,16 @@ action_low = env.action_space.low
 
 input_dim = env.observation_space.shape[0]
 
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.15)
 sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 # sess = tf.InteractiveSession()
 
 actor = ActorNetwork(sess, input_dim, action_dim, BATCH_SIZE, TAU, LRA, L2A)
 critic = CriticNetwork(sess, input_dim, action_dim, BATCH_SIZE, TAU, LRC, L2C)
 buff = ReplayBuffer(BUFFER_SIZE)
-# exploration = OUNoise(action_dim)
+exploration = OUNoise(action_dim)
 
-env.monitor.start('experiments/' + ENVIRONMENT_NAME, force=True)
+# env.monitor.start('experiments/' + ENVIRONMENT_NAME, force=True)
 
 for ep in range(100000):
     # open up a game state
@@ -51,20 +53,24 @@ for ep in range(100000):
 
     reward = 0
 
-    exploration_noise = OUNoise(action_dim)
+    exploration.reset()
 
     # exploration.reset()
     for t in range(100):
         env.render()
 
         # select action according to current policy and exploration noise
-        a_t = actor.predict([s_t]) + exploration_noise.noise()
+        a_t = actor.predict([s_t]) + exploration.noise()
 
         # execute action and observe reward and new state
         s_t1, r_t, done, info = env.step(a_t[0])
 
         # store transition in replay buffer
         buff.add(s_t, a_t[0], r_t, s_t1, done)
+
+        if buff.count() < BUFFER_START_SIZE:
+            print ('.', end='')
+            continue
 
         # sample a random minibatch of N transitions (si, ai, ri, si+1) from replay buffer
         batch = buff.getBatch(BATCH_SIZE)
