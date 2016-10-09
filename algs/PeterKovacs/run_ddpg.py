@@ -34,7 +34,9 @@ action_low = env.action_space.low
 
 input_dim = env.observation_space.shape[0]
 
-sess = tf.InteractiveSession()
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+# sess = tf.InteractiveSession()
 
 actor = ActorNetwork(sess, input_dim, action_dim, BATCH_SIZE, TAU, LRA, L2A)
 critic = CriticNetwork(sess, input_dim, action_dim, BATCH_SIZE, TAU, LRC, L2C)
@@ -98,7 +100,7 @@ for ep in range(100000):
         s_t = s_t1
         reward += r_t
 
-    print ("%3d  Reward = %10.0f  " % (ep, reward))
+    print ("%3d  Reward = %+10.0f  " % (ep, reward))
 
 # Dump result info to disk
 env.monitor.close()

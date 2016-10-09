@@ -1,8 +1,5 @@
 TODO:
 
-> add big reward for the touching
-
-
 - test stevenjg's agent
 - limit GPU memory usage for the TF session to run several tests simultatiously
 -
@@ -20,6 +17,7 @@ view:
 
 
 DONE:
++ add big reward for the touching
 + implement Brick env
   + https://gym.openai.com/evaluations/eval_xjuUFdvrQR68YWvUqsjKPQ#writeup
   + https://gym.openai.com/evaluations/eval_i3lTYeUTW27Q0bBAjAvSw
