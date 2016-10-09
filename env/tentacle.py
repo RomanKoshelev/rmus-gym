@@ -242,16 +242,22 @@ class Tentacle(gym.Env):
                j2_speed
 
     def _make_reward(self, action):
+        global hr
         head = self.tentacle[len(self.tentacle) - 1]
-        hx, hy = head.position[0], head.position[1]
-        tx, ty = self.target[0].position[0], self.target[0].position[1]
+        target = self.target[0]
+        hx, hy, hr = head.position[0], head.position[1], head.fixtures[0].shape.radius
+        tx, ty, tr = target.position[0], target.position[1], target.fixtures[0].shape.radius
         dx, dy = hx - tx, hy - ty
+        r = hr + tr
+        d = np.sqrt(dx ** 2 + dy ** 2)
 
-        cost_dist = dx ** 2 + dy ** 2
-        cost_act = abs(action[0])
-        cost = 1. * cost_dist + \
-               0.01 * cost_act
-        return -cost
+        rw_touch = + 100. * ((r / max(d, r))**3)
+        rw_dist = - 10. * (d ** 2)
+        rw_act = - 0.001 * (np.sum(abs(action)))  # type: float
+
+        # print("%+8.2f %+8.2f %+8.2f " % (rw_touch, rw_dist, rw_act))
+
+        return rw_touch + rw_dist + rw_act
 
     # endregion
 
