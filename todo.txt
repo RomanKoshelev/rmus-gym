@@ -17,7 +17,6 @@ view:
 - http://videolectures.net/rldm2015_silver_reinforcement_learning/
 - selected alg
 
-
 DONE:
 + test ioanachelu's agent (https://github.com/ioanachelu/turi_ddpg)
 + test stevenpjg's agent

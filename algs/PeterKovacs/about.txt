@@ -1,0 +1,3 @@
+# https://gym.openai.com/evaluations/eval_xjuUFdvrQR68YWvUqsjKPQ#writeup
+# CONTINUOUS CONTROL WITH DEEP REINFORCEMENT LEARNING http://arxiv.org/pdf/1509.02971v5.pdf
+# https://www.youtube.com/watch?v=tJBIqkC1wWM&feature=youtu.be

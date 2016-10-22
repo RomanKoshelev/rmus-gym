@@ -1,5 +1,4 @@
 import gym
-import tensorflow as tf
 import config
 from agent import AgentDDPG
 
@@ -20,7 +19,7 @@ def main():
         obs = env.reset()
         agent.set_state(obs)
         score = 0
-        for t in xrange(100):  # config.STEPS):
+        for t in xrange(config.STEPS):
             if config.SHOW_TRAINING:
                 env.render()
                 action = agent.get_action()
