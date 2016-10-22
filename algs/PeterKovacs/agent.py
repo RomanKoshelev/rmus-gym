@@ -1,5 +1,4 @@
 from __future__ import print_function
-import numpy as np
 import tensorflow as tf
 import gym
 
@@ -11,44 +10,33 @@ from ou_noise import OUNoise
 
 
 def train(sess, env):
-    action_dim = env.action_space.shape[0]
-    input_dim = env.observation_space.shape[0]
+    act_dim = env.action_space.shape[0]
+    obs_dim = env.observation_space.shape[0]
 
-    actor = ActorNetwork(sess, input_dim, action_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
-    critic = CriticNetwork(sess, input_dim, action_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
+    actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
+    critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
     buff = ReplayBuffer(cfg.BUFFER_SIZE)
-    exploration = OUNoise(action_dim)
+    exploration = OUNoise(act_dim)
 
     for ep in range(cfg.EPISODES):
-        s, _, done = env.reset(), 0, False
-        reward = 0
+        s, reward, done = env.reset(), 0, False
         exploration.reset()
 
         for t in range(cfg.STEPS):
             env.render()
 
+            # execute step
             a = actor.predict([s]) + exploration.noise()
-            sn, r, done, info = env.step(a[0])
-            buff.add(s, a[0], r, sn, done)
+            ns, r, done, info = env.step(a[0])
+            buff.add(s, a[0], r, ns, done)
 
-            # sample a random minibatch
+            # sample minibatch
             batch = buff.getBatch(cfg.BATCH_SIZE)
-            states = np.asarray([e[0] for e in batch])
-            actions = np.asarray([e[1] for e in batch])
-            rewards = np.asarray([e[2] for e in batch])
-            new_states = np.asarray([e[3] for e in batch])
-            dones = np.asarray([e[4] for e in batch])
+            states, actions, rewards, new_states, dones = zip(*batch)
 
             # set target
-            target_q_values = critic.target_predict(new_states, actor.target_predict(new_states))
-            y = [rewards[i] + (cfg.GAMMA * target_q_values[i] if not dones[i] else 0) for i in range(len(batch))]
-
-            #            y = []
-            # for i in range(len(batch)):
-#                 if dones[i]:
-#                     y.append(rewards[i])
-#                 else:
-#                     y.append(rewards[i] + cfg.GAMMA * target_q_values[i])
+            target_q = critic.target_predict(new_states, actor.target_predict(new_states))
+            y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else 0) for i in range(len(batch))]
 
             # update critic
             critic.train(y, states, actions)
@@ -62,10 +50,10 @@ def train(sess, env):
             critic.target_train()
 
             # move to next state
-            s = sn
+            s = ns
             reward += r
 
-        print("%3d  Reward = %+5.0f  " % (ep, reward))
+        print("%3d  Reward = %+7.0f  " % (ep, reward))
 
 
 def main():
