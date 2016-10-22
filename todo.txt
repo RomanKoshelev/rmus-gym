@@ -1,14 +1,13 @@
 TODO:
 
-- test ioanachelu's agent
-- refactore
 - add train/eval/demo scripts
+- implement framowrok for LSDNet
+
+LATER:
 - add cost for sharp junction angles
 - add more segments
 - create spiders
 - add colloborative environment
-
-LATER:
 - read:
  - https://www.dropbox.com/s/rqtpp1jv2jtzxeg/ICML2016_benchmarking_slides.pdf?dl=0
  - http://arxiv.org/pdf/1511.06581v3.pdf
@@ -19,8 +18,8 @@ view:
 - selected alg
 
 
-
 DONE:
++ test ioanachelu's agent (https://github.com/ioanachelu/turi_ddpg)
 + test stevenpjg's agent
 + limit GPU memory usage for the TF session to run several tests simultatiously
 + add big reward for the touching
