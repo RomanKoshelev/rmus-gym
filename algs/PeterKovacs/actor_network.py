@@ -30,10 +30,6 @@ class ActorNetwork(object):
         # INIT VARIABLES
         self.sess.run(tf.initialize_all_variables())
 
-        # SAVER
-        self.saver = tf.train.Saver()
-        self.load_network()
-
     def train(self, states, action_grads):
         self.sess.run(self.optimize, feed_dict={
             self.state: states,
@@ -93,14 +89,3 @@ class ActorNetwork(object):
     def bias_variable(self, shape):
         initial = tf.constant(0.01, shape=shape)
         return tf.Variable(initial)
-
-    def save_network(self, time_step):
-        self.saver.save(self.sess, cfg.CHECKPOINT_PATH_ACTOR, global_step=time_step)
-
-    def load_network(self):
-        checkpoint = tf.train.get_checkpoint_state(cfg.CHECKPOINT_PATH_ACTOR)
-        if checkpoint and checkpoint.model_checkpoint_path:
-            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
-            print "Successfully loaded:", checkpoint.model_checkpoint_path
-        else:
-            print "Could not find old network weights for ", cfg.CHECKPOINT_PATH_ACTOR

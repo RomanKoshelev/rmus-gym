@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+import os
+
 import tensorflow as tf
 import gym
 
@@ -17,6 +20,8 @@ def train(sess, env):
     critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
     buff = ReplayBuffer(cfg.BUFFER_SIZE)
     exploration = OUNoise(act_dim)
+
+    load(sess)
 
     for ep in range(cfg.EPISODES):
         s, reward, done = env.reset(), 0, False
@@ -54,12 +59,22 @@ def train(sess, env):
             reward += r
 
         if ep % cfg.SAVE_EVERY_EPISODES == 0:
-            steps = (ep+1) * cfg.STEPS
-            print ("Saving...")
-            actor.save_network(steps)
-            critic.save_network(steps)
+            save(sess)
 
         print("%3d  Reward = %+7.0f  " % (ep, reward))
+
+
+def save(sess):
+    print("Saving...")
+    tf.train.Saver().save(sess, cfg.CHECKPOINT_PATH)
+
+
+def load(sess):
+    if os.path.exists(cfg.CHECKPOINT_PATH):
+        tf.train.Saver().restore(sess, cfg.CHECKPOINT_PATH)
+        print ("Successfully loaded:", cfg.CHECKPOINT_PATH)
+    else:
+        print ("Could not find old network weights for ", cfg.CHECKPOINT_PATH)
 
 
 def main():
