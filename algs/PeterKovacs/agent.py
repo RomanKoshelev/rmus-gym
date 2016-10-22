@@ -53,6 +53,12 @@ def train(sess, env):
             s = ns
             reward += r
 
+        if ep % cfg.SAVE_EVERY_EPISODES == 0:
+            steps = (ep+1) * cfg.STEPS
+            print ("Saving...")
+            actor.save_network(steps)
+            critic.save_network(steps)
+
         print("%3d  Reward = %+7.0f  " % (ep, reward))
 
 

@@ -1,6 +1,5 @@
 import tensorflow as tf
-import numpy as np
-import math
+import config as cfg
 
 HIDDEN1_UNITS = 400
 HIDDEN2_UNITS = 300
@@ -15,8 +14,7 @@ class ActorNetwork(object):
         self.L2 = L2
 
         # ACTOR
-        self.state, self.out, self.net = \
-            self.create_actor_network(state_size, action_size)
+        self.state, self.out, self.net = self.create_actor_network(state_size, action_size)
 
         # TARGET NETWORK
         self.target_state, self.target_update, self.target_net, self.target_out = \
@@ -31,6 +29,10 @@ class ActorNetwork(object):
 
         # INIT VARIABLES
         self.sess.run(tf.initialize_all_variables())
+
+        # SAVER
+        self.saver = tf.train.Saver()
+        self.load_network()
 
     def train(self, states, action_grads):
         self.sess.run(self.optimize, feed_dict={
@@ -91,3 +93,14 @@ class ActorNetwork(object):
     def bias_variable(self, shape):
         initial = tf.constant(0.01, shape=shape)
         return tf.Variable(initial)
+
+    def save_network(self, time_step):
+        self.saver.save(self.sess, cfg.CHECKPOINT_PATH_ACTOR, global_step=time_step)
+
+    def load_network(self):
+        checkpoint = tf.train.get_checkpoint_state(cfg.CHECKPOINT_PATH_ACTOR)
+        if checkpoint and checkpoint.model_checkpoint_path:
+            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
+            print "Successfully loaded:", checkpoint.model_checkpoint_path
+        else:
+            print "Could not find old network weights for ", cfg.CHECKPOINT_PATH_ACTOR

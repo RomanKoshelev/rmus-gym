@@ -1,6 +1,5 @@
 import tensorflow as tf
-import numpy as np
-import math
+import config as cfg
 
 HIDDEN1_UNITS = 400
 HIDDEN2_UNITS = 300
@@ -36,6 +35,10 @@ class CriticNetwork(object):
 
         # INIT VARIABLES
         self.sess.run(tf.initialize_all_variables())
+
+        # SAVER
+        self.saver = tf.train.Saver()
+        self.load_network()
 
     def gradients(self, states, actions):
         return self.sess.run(self.action_grads, feed_dict={
@@ -109,3 +112,14 @@ class CriticNetwork(object):
     def bias_variable(self, shape):
         initial = tf.constant(0.001, shape=shape)
         return tf.Variable(initial)
+
+    def save_network(self, time_step):
+        self.saver.save(self.sess, cfg.CHECKPOINT_PATH_CRITIC, global_step=time_step)
+
+    def load_network(self):
+        checkpoint = tf.train.get_checkpoint_state(cfg.CHECKPOINT_PATH_CRITIC)
+        if checkpoint and checkpoint.model_checkpoint_path:
+            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
+            print "Successfully loaded:", checkpoint.model_checkpoint_path
+        else:
+            print "Could not find old network weights for ", cfg.CHECKPOINT_PATH_CRITIC
