@@ -1,12 +1,14 @@
 TODO:
 
-- implement wrapper agent
-- use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
+> use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
+
 - experiments:
+  - wrapper
   - two hands
   - see diagramm
 
 DONE:
++ implement wrapper agent
 + refactor: use agent class
   + create
   + train
