@@ -259,7 +259,7 @@ class Tentacle(gym.Env):
         r = hr + tr
         d = np.sqrt(dx ** 2 + dy ** 2)
 
-        rw_touch = + 100. * ((r / max(d, r))**3)
+        rw_touch = + 100. * ((r / max(d, r)) ** 3)
         rw_dist = - 10. * (d ** 2)
         rw_act = - 1. * (np.sum(np.abs(action) * (0.9, 0.3, 0.1)))  # type: float
 

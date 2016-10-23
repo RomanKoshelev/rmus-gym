@@ -1,0 +1,2 @@
+ENVIRONMENT_NAME = 'Tentacle-v0'
+CHECKPOINT_FOLDER = './data/'
