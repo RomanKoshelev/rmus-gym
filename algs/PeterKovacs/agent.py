@@ -12,104 +12,98 @@ from critic_network import CriticNetwork
 from ou_noise import OUNoise
 
 
-def train(sess, env):
-    act_dim = env.action_space.shape[0]
-    obs_dim = env.observation_space.shape[0]
+class Agent:
+    def __init__(self, sess, env):
+        self.sess = sess
+        self.env = env
 
-    actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
-    critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
-    buff = ReplayBuffer(cfg.BUFFER_SIZE)
-    exploration = OUNoise(act_dim)
+        act_dim = env.action_space.shape[0]
+        obs_dim = env.observation_space.shape[0]
 
-    load(sess)
+        self.actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
+        self.critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
+        self.buff = ReplayBuffer(cfg.BUFFER_SIZE)
+        self.exploration = OUNoise(act_dim)
 
-    for ep in range(cfg.EPISODES):
-        s, reward, done = env.reset(), 0, False
-        exploration.reset()
+        self.saver = tf.train.Saver()
+        self.load()
 
-        for t in range(cfg.STEPS):
-            env.render()
+    def train(self):
+        for ep in range(cfg.EPISODES):
+            s, reward, done = self.env.reset(), 0, False
+            self.exploration.reset()
 
-            # execute step
-            a = actor.predict([s]) + exploration.noise()
-            ns, r, done, info = env.step(a[0])
-            buff.add(s, a[0], r, ns, done)
+            for t in range(cfg.STEPS):
+                self.env.render()
 
-            # sample minibatch
-            batch = buff.getBatch(cfg.BATCH_SIZE)
-            states, actions, rewards, new_states, dones = zip(*batch)
+                # execute step
+                a = self.actor.predict([s]) + self.exploration.noise()
+                ns, r, done, info = self.env.step(a[0])
+                self.buff.add(s, a[0], r, ns, done)
 
-            # set target
-            target_q = critic.target_predict(new_states, actor.target_predict(new_states))
-            y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else 0) for i in range(len(batch))]
+                # sample minibatch
+                batch = self.buff.getBatch(cfg.BATCH_SIZE)
+                states, actions, rewards, new_states, dones = zip(*batch)
 
-            # update critic
-            critic.train(y, states, actions)
+                # set target
+                target_q = self.critic.target_predict(new_states, self.actor.target_predict(new_states))
+                y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else 0) for i in range(len(batch))]
 
-            # update actor
-            grads = critic.gradients(states, actor.predict(states))
-            actor.train(states, grads)
+                # update critic
+                self.critic.train(y, states, actions)
 
-            # update the target networks
-            actor.target_train()
-            critic.target_train()
+                # update actor
+                grads = self.critic.gradients(states, self.actor.predict(states))
+                self.actor.train(states, grads)
 
-            # move to next state
-            s = ns
-            reward += r
+                # update the target networks
+                self.actor.target_train()
+                self.critic.target_train()
 
-        if ep % cfg.SAVE_EVERY_EPISODES == 0:
-            save(sess)
+                # move to next state
+                s = ns
+                reward += r
 
-        print("%3d  Reward = %+7.0f  " % (ep, reward))
+            if ep % cfg.SAVE_EVERY_EPISODES == 0:
+                self.save()
 
+            print("%3d  Reward = %+7.0f  " % (ep, reward))
 
-def run(sess, env):
-    act_dim = env.action_space.shape[0]
-    obs_dim = env.observation_space.shape[0]
+    def run(self):
+        for ep in range(cfg.EPISODES):
+            s = self.env.reset()
+            reward = 0
 
-    actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
-    critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
+            for t in range(cfg.STEPS):
+                self.env.render()
 
-    load(sess)
+                a = self.actor.predict([s])
+                s, r, _, _ = self.env.step(a[0])
+                reward += r
 
-    for ep in range(cfg.EPISODES):
-        s = env.reset()
-        reward = 0
+            print("%3d  Reward = %+7.0f  " % (ep, reward))
 
-        for t in range(cfg.STEPS):
-            env.render()
+    def save(self):
+        print("Saving...")
+        self.saver.save(self.sess, cfg.CHECKPOINT_PATH)
 
-            # execute step
-            a = actor.predict([s])
-            s, r, done, info = env.step(a[0])
-
-            # move to next state
-            reward += r
-
-        print("%3d  Reward = %+7.0f  " % (ep, reward))
-
-
-def save(sess):
-    print("Saving...")
-    tf.train.Saver().save(sess, cfg.CHECKPOINT_PATH)
-
-
-def load(sess):
-    if os.path.exists(cfg.CHECKPOINT_PATH):
-        tf.train.Saver().restore(sess, cfg.CHECKPOINT_PATH)
-        print ("Successfully loaded:", cfg.CHECKPOINT_PATH)
-    else:
-        print ("Could not find old network weights for ", cfg.CHECKPOINT_PATH)
+    def load(self):
+        if os.path.exists(cfg.CHECKPOINT_PATH):
+            self.saver.restore(self.sess, cfg.CHECKPOINT_PATH)
+            print("Successfully loaded:", cfg.CHECKPOINT_PATH)
+        else:
+            print("Could not find old network weights for ", cfg.CHECKPOINT_PATH)
 
 
 def main():
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.15)
-    sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-    env = gym.make(cfg.ENVIRONMENT_NAME)
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    sess = tf.Session(config=config)
 
-    # train(sess, env)
-    run(sess, env)
+    env = gym.make(cfg.ENVIRONMENT_NAME)
+    agent = Agent(sess, env)
+    agent.train()
+    agent.run()
 
 
 if __name__ == '__main__':
