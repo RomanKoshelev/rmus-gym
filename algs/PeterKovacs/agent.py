@@ -64,6 +64,32 @@ def train(sess, env):
         print("%3d  Reward = %+7.0f  " % (ep, reward))
 
 
+def run(sess, env):
+    act_dim = env.action_space.shape[0]
+    obs_dim = env.observation_space.shape[0]
+
+    actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
+    critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
+
+    load(sess)
+
+    for ep in range(cfg.EPISODES):
+        s = env.reset()
+        reward = 0
+
+        for t in range(cfg.STEPS):
+            env.render()
+
+            # execute step
+            a = actor.predict([s])
+            s, r, done, info = env.step(a[0])
+
+            # move to next state
+            reward += r
+
+        print("%3d  Reward = %+7.0f  " % (ep, reward))
+
+
 def save(sess):
     print("Saving...")
     tf.train.Saver().save(sess, cfg.CHECKPOINT_PATH)
@@ -82,7 +108,8 @@ def main():
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
     env = gym.make(cfg.ENVIRONMENT_NAME)
 
-    train(sess, env)
+    # train(sess, env)
+    run(sess, env)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,14 @@
 TODO:
 
-- add train/eval/demo scripts
-- implement framowrok for LSDNet
+- add demo scripts
+- refactor: use agent class
+  - create
+  - train
+  - load
+  - save
+  - run
+  - predict
+- implement wrapper agent
 
 LATER:
 - add cost for sharp junction angles
@@ -18,6 +25,7 @@ view:
 - selected alg
 
 DONE:
++ add train scripts
 + test ioanachelu's agent (https://github.com/ioanachelu/turi_ddpg)
 + test stevenpjg's agent
 + limit GPU memory usage for the TF session to run several tests simultatiously
