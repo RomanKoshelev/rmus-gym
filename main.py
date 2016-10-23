@@ -4,19 +4,26 @@ import tensorflow as tf
 import gym
 import config as cfg
 from algs.PeterKovacs.ddqn import DDQN
+from algs.RomanKoshelev.SaWrapper import SaWrapper
 
 
 def main():
+    # sess
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    env = gym.make(cfg.ENVIRONMENT_NAME)
-    agent = DDQN(sess, env, cfg.CHECKPOINT_FOLDER)
+    # env
+    env = gym.make('Tentacle-v0')
+    obs_dim = env.observation_space.shape[0]
+    act_dim = env.action_space.shape[0]
 
-    agent.train()
-    agent.run()
+    # agent
+    # agent = DDQN(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
+    agent = SaWrapper(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
 
+    # agent.train(env, cfg.EPISODES, cfg.STEPS, cfg.SAVE_EPISODES)
+    agent.run(env, cfg.EPISODES, cfg.STEPS)
 
 if __name__ == '__main__':
     main()

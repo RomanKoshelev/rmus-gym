@@ -3,8 +3,6 @@ from __future__ import print_function
 import os
 
 import tensorflow as tf
-import gym
-
 import config as cfg
 from replay_buffer import ReplayBuffer
 from actor_network import ActorNetwork
@@ -13,12 +11,9 @@ from ou_noise import OUNoise
 
 
 class DDQN:
-    def __init__(self, sess, env, data_folder):
+    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder):
         self.sess = sess
-        self.env = env
-
-        act_dim = env.action_space.shape[0]
-        obs_dim = env.observation_space.shape[0]
+        self.env_id = env_id
 
         self.actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
         self.critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
@@ -29,17 +24,17 @@ class DDQN:
         self.data_folder = data_folder
         self.load()
 
-    def train(self):
-        for ep in range(cfg.EPISODES):
-            s, reward, done = self.env.reset(), 0, False
+    def train(self, env, episodes, steps, save_every_episodes):
+        for ep in range(episodes):
+            s, reward, done = env.reset(), 0, False
             self.exploration.reset()
 
-            for t in range(cfg.STEPS):
-                self.env.render()
+            for t in range(steps):
+                env.render()
 
                 # execute step
                 a = self.actor.predict([s]) + self.exploration.noise()
-                ns, r, done, info = self.env.step(a[0])
+                ns, r, done, info = env.step(a[0])
                 self.buff.add(s, a[0], r, ns, done)
 
                 # sample minibatch
@@ -65,24 +60,24 @@ class DDQN:
                 s = ns
                 reward += r
 
-            if ep % cfg.SAVE_EVERY_EPISODES == 0:
+            if ep % save_every_episodes == 0:
                 self.save()
 
             print("%3d  Reward = %+7.0f  " % (ep, reward))
 
-    def run(self):
-        for ep in range(cfg.EPISODES):
-            s = self.env.reset()
+    def run(self, env, episodes, steps):
+        for ep in range(episodes):
+            s = env.reset()
             reward = 0
-
-            for t in range(cfg.STEPS):
-                self.env.render()
-
-                a = self.actor.predict([s])
-                s, r, _, _ = self.env.step(a[0])
+            for t in range(steps):
+                env.render()
+                a = self.act(s)
+                s, r, _, _ = env.step(a[0])
                 reward += r
-
             print("%3d  Reward = %+7.0f  " % (ep, reward))
+
+    def act(self, s):
+        return self.actor.predict([s])
 
     def save(self):
         print("Saving...")
@@ -97,5 +92,5 @@ class DDQN:
 
     @property
     def model_path(self):
-        name = "%s.%s" % (self.__class__.__name__, self.env.spec.id)
+        name = "%s.%s" % (self.__class__.__name__, self.env_id)
         return os.path.join(self.data_folder, name + ".ckpt")
