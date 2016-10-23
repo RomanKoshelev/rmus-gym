@@ -11,7 +11,7 @@ from ou_noise import OUNoise
 
 
 class DDQN:
-    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder):
+    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder=None):
         self.sess = sess
         self.env_id = env_id
 
@@ -80,10 +80,14 @@ class DDQN:
         return self.actor.predict([s])
 
     def save(self):
+        if self.model_path is None:
+            return
         print("Saving...")
         self.saver.save(self.sess, self.model_path)
 
     def load(self):
+        if self.model_path is None:
+            return
         if os.path.exists(self.model_path):
             self.saver.restore(self.sess, self.model_path)
             print("Successfully loaded:", self.model_path)
@@ -92,5 +96,7 @@ class DDQN:
 
     @property
     def model_path(self):
+        if self.data_folder is None:
+            return None
         name = "%s.%s" % (self.__class__.__name__, self.env_id)
         return os.path.join(self.data_folder, name + ".ckpt")

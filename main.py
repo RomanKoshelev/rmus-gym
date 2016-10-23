@@ -4,7 +4,7 @@ import tensorflow as tf
 import gym
 import config as cfg
 from algs.PeterKovacs.ddqn import DDQN
-from algs.RomanKoshelev.SaWrapper import SaWrapper
+from algs.RomanKoshelev.sa_wrapper import SAWrapper
 
 
 def main():
@@ -20,10 +20,10 @@ def main():
 
     # agent
     # agent = DDQN(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
-    agent = SaWrapper(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
+    agent = SAWrapper(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
 
-    # agent.train(env, cfg.EPISODES, cfg.STEPS, cfg.SAVE_EPISODES)
-    agent.run(env, cfg.EPISODES, cfg.STEPS)
+    agent.train(env, cfg.EPISODES, cfg.STEPS, cfg.SAVE_EPISODES)
+    # agent.run(env, cfg.EPISODES, cfg.STEPS)
 
 if __name__ == '__main__':
     main()
