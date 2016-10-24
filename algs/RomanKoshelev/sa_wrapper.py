@@ -7,8 +7,9 @@ from algs.PeterKovacs.ou_noise import OUNoise
 
 
 class SAWrapper:
-    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder):
+    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder, prefix=None):
         self.sess = sess
+        self.prefix = prefix
         self.env_id = env_id
         self.obs_dim = obs_dim
         self.act_dim = act_dim
@@ -32,7 +33,8 @@ class SAWrapper:
 
     def train(self, env, episodes, steps, save_every_episodes):
         agent = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
-        # driver = DDQN(self.sess, self.env_id, self.drv_dim, self.drv_dim)
+        driver = DDQN(self.sess, self.env_id, self.drv_dim, self.drv_dim, self.data_folder,
+                      prefix=self.scope + '_driver')
 
         for ep in range(episodes):
             s, reward, done = env.reset(), 0, False
@@ -82,3 +84,9 @@ class SAWrapper:
                 # driver.save()
 
             print("%3d  Reward = %+7.0f  " % (ep, reward))
+
+    @property
+    def scope(self):
+        name = self.prefix + '_' if self.prefix is not None else ''
+        name += "%s_%s" % (self.__class__.__name__, self.env_id)
+        return name.replace('-', '_')

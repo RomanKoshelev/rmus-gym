@@ -11,20 +11,24 @@ from ou_noise import OUNoise
 
 
 class DDQN:
-    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder=None):
+    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder, prefix=None):
         self.sess = sess
+        self.prefix = prefix
         self.env_id = env_id
 
-        with tf.variable_scope(self.id):
+        with tf.variable_scope(self.scope):
             with tf.variable_scope("actor"):
                 self.actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
             with tf.variable_scope("critic"):
                 self.critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
 
+        var_list = tf.get_collection(tf.GraphKeys.VARIABLES, scope=self.scope)
+        self.sess.run(tf.initialize_variables(var_list))
+
         self.buff = ReplayBuffer(cfg.BUFFER_SIZE)
         self.exploration = OUNoise(act_dim)
 
-        self.saver = tf.train.Saver(tf.get_collection(tf.GraphKeys.VARIABLES, scope=self.id))
+        self.saver = tf.train.Saver(var_list)
         self.data_folder = data_folder
         self.load()
 
@@ -90,8 +94,6 @@ class DDQN:
         self.saver.save(self.sess, self.model_path)
 
     def load(self):
-        if self.model_path is None:
-            return
         if os.path.exists(self.model_path):
             self.saver.restore(self.sess, self.model_path)
             print("Successfully loaded:", self.model_path)
@@ -99,11 +101,13 @@ class DDQN:
             print("Could not find old network weights for ", self.model_path)
 
     @property
-    def id(self):
-        return ("%s_%s" % (self.__class__.__name__, self.env_id)).replace('-', '_')
+    def scope(self):
+        name = self.prefix + '_' if self.prefix is not None else ''
+        name += "%s_%s" % (self.__class__.__name__, self.env_id)
+        return name.replace('-', '_')
 
     @property
     def model_path(self):
         if self.data_folder is None:
             return None
-        return os.path.join(self.data_folder, self.id + ".ckpt")
+        return os.path.join(self.data_folder, self.scope + ".ckpt")

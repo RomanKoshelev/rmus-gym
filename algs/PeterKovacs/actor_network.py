@@ -26,9 +26,6 @@ class ActorNetwork(object):
         grads = zip(self.params_grad, self.net)
         self.optimize = tf.train.AdamOptimizer(LEARNING_RATE).apply_gradients(grads)
 
-        # INIT VARIABLES
-        self.sess.run(tf.initialize_all_variables())
-
     def train(self, states, action_grads):
         self.sess.run(self.optimize, feed_dict={
             self.state: states,
