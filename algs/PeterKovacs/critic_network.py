@@ -22,7 +22,7 @@ class CriticNetwork(object):
                 self.crate_critic_target_network(state_size, action_size, self.net)
 
         # TRAINING
-        self.y = tf.placeholder("float", [None, 1])
+        self.y = tf.placeholder("float", [None, 1], name='y')
         self.error = tf.reduce_mean(tf.square(self.y - self.out))
         self.weight_decay = tf.add_n([self.L2 * tf.nn.l2_loss(var) for var in self.net])
         self.loss = self.error + self.weight_decay
@@ -61,8 +61,8 @@ class CriticNetwork(object):
 
     def crate_critic_target_network(self, input_dim, action_dim, net):
         # input
-        state = tf.placeholder(tf.float32, shape=[None, input_dim])
-        action = tf.placeholder(tf.float32, shape=[None, action_dim])
+        state = tf.placeholder(tf.float32, shape=[None, input_dim], name='state')
+        action = tf.placeholder(tf.float32, shape=[None, action_dim], name='action')
 
         ema = tf.train.ExponentialMovingAverage(decay=1 - self.TAU)
         target_update = ema.apply(net)
@@ -77,8 +77,8 @@ class CriticNetwork(object):
 
     def create_critic_network(self, state_dim, action_dim):
         # input
-        state = tf.placeholder(tf.float32, shape=[None, state_dim])
-        action = tf.placeholder(tf.float32, shape=[None, action_dim])
+        state = tf.placeholder(tf.float32, shape=[None, state_dim], name='state')
+        action = tf.placeholder(tf.float32, shape=[None, action_dim], name='action')
 
         # network weights
         W1 = self.weight_variable([state_dim, HIDDEN1_UNITS])

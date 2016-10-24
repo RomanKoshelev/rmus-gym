@@ -32,9 +32,8 @@ class SAWrapper:
             print("%3d  Reward = %+7.0f  " % (ep, reward))
 
     def train(self, env, episodes, steps, save_every_episodes):
-        agent = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
-        driver = DDQN(self.sess, self.env_id, self.drv_dim, self.drv_dim, self.data_folder,
-                      prefix=self.scope + '_driver')
+        driver = DDQN(self.sess, self.env_id, self.drv_dim, self.drv_dim, self.data_folder, self.scope + '_driver')
+        worker = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
 
         for ep in range(episodes):
             s, reward, done = env.reset(), 0, False
@@ -49,18 +48,16 @@ class SAWrapper:
                 inn_s = s[wn:]
 
                 # execute step
-                drv_a = [wrd_s[0], wrd_s[1]]  # driver.actor.predict([s]) + self.exploration.noise()
-                agn_s = np.append(drv_a, inn_s)
-                agn_a = agent.actor.predict([agn_s])
-                ns, r, done, info = env.step(agn_a[0])
+                drv_a = driver.act(wrd_s)  # + self.exploration.noise()
+                wrk_s = np.append(drv_a, inn_s)
+                wrk_a = worker.actor.predict([wrk_s])
+                ns, r, done, info = env.step(wrk_a[0])
                 wrd_ns = ns[0:wn]
                 s = ns
                 reward += r
-                continue
-
-                driver.buff.add(wrd_s, drv_a[0], r, wrd_ns, done)
 
                 # sample minibatch
+                driver.buff.add(wrd_s, drv_a[0], r, wrd_ns, done)
                 batch = driver.buff.getBatch(cfg.BATCH_SIZE)
                 states, actions, rewards, new_states, dones = zip(*batch)
 
@@ -80,13 +77,12 @@ class SAWrapper:
                 driver.critic.target_train()
 
             if ep % save_every_episodes == 0:
-                pass
-                # driver.save()
+                driver.save()
 
             print("%3d  Reward = %+7.0f  " % (ep, reward))
 
     @property
     def scope(self):
         name = self.prefix + '_' if self.prefix is not None else ''
-        name += "%s_%s" % (self.__class__.__name__, self.env_id)
+        name += self.__class__.__name__
         return name.replace('-', '_')

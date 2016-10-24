@@ -20,7 +20,7 @@ class ActorNetwork(object):
                 self.crate_actor_target_network(state_size, self.net)
 
         # TRAINING
-        self.action_gradient = tf.placeholder(tf.float32, [None, action_size])
+        self.action_gradient = tf.placeholder(tf.float32, [None, action_size], name='action_gradient')
         self.params_grad = tf.gradients(
             self.out, self.net, -self.action_gradient)
         grads = zip(self.params_grad, self.net)
@@ -47,7 +47,7 @@ class ActorNetwork(object):
 
     def crate_actor_target_network(self, input_dim, net):
         # input
-        state = tf.placeholder(tf.float32, shape=[None, input_dim])
+        state = tf.placeholder(tf.float32, shape=[None, input_dim], name='state')
 
         ema = tf.train.ExponentialMovingAverage(decay=1 - self.TAU)
         target_update = ema.apply(net)
@@ -61,7 +61,7 @@ class ActorNetwork(object):
 
     def create_actor_network(self, input_dim, output_dim):
         # input
-        state = tf.placeholder(tf.float32, shape=[None, input_dim])
+        state = tf.placeholder(tf.float32, shape=[None, input_dim], name='state')
 
         # network weights
         W1 = self.weight_variable([input_dim, HIDDEN1_UNITS])
