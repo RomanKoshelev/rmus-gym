@@ -1,7 +1,7 @@
 TODO:
 
 > use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
-
+- train and save with tf.scopes
 - experiments:
   - wrapper
   - two hands

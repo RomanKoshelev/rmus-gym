@@ -15,12 +15,16 @@ class DDQN:
         self.sess = sess
         self.env_id = env_id
 
-        self.actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
-        self.critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
+        with tf.variable_scope(self.id):
+            with tf.variable_scope("actor"):
+                self.actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
+            with tf.variable_scope("critic"):
+                self.critic = CriticNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRC, cfg.L2C)
+
         self.buff = ReplayBuffer(cfg.BUFFER_SIZE)
         self.exploration = OUNoise(act_dim)
 
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(tf.get_collection(tf.GraphKeys.VARIABLES, scope=self.id))
         self.data_folder = data_folder
         self.load()
 
@@ -95,8 +99,11 @@ class DDQN:
             print("Could not find old network weights for ", self.model_path)
 
     @property
+    def id(self):
+        return ("%s_%s" % (self.__class__.__name__, self.env_id)).replace('-', '_')
+
+    @property
     def model_path(self):
         if self.data_folder is None:
             return None
-        name = "%s.%s" % (self.__class__.__name__, self.env_id)
-        return os.path.join(self.data_folder, name + ".ckpt")
+        return os.path.join(self.data_folder, self.id + ".ckpt")

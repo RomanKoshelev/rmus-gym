@@ -19,8 +19,8 @@ def main():
     act_dim = env.action_space.shape[0]
 
     # agent
-    # agent = DDQN(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
-    agent = SAWrapper(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
+    agent = DDQN(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
+    # agent = SAWrapper(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
 
     agent.train(env, cfg.EPISODES, cfg.STEPS, cfg.SAVE_EPISODES)
     # agent.run(env, cfg.EPISODES, cfg.STEPS)

@@ -1,5 +1,4 @@
 import tensorflow as tf
-import config as cfg
 
 HIDDEN1_UNITS = 400
 HIDDEN2_UNITS = 300
@@ -13,12 +12,12 @@ class ActorNetwork(object):
         self.LEARNING_RATE = LEARNING_RATE
         self.L2 = L2
 
-        # ACTOR
-        self.state, self.out, self.net = self.create_actor_network(state_size, action_size)
+        with tf.variable_scope("master"):
+            self.state, self.out, self.net = self.create_actor_network(state_size, action_size)
 
-        # TARGET NETWORK
-        self.target_state, self.target_update, self.target_net, self.target_out = \
-            self.crate_actor_target_network(state_size, self.net)
+        with tf.variable_scope("target"):
+            self.target_state, self.target_update, self.target_net, self.target_out = \
+                self.crate_actor_target_network(state_size, self.net)
 
         # TRAINING
         self.action_gradient = tf.placeholder(tf.float32, [None, action_size])
