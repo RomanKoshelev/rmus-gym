@@ -13,9 +13,9 @@ class SAWrapper:
         self.env_id = env_id
         self.obs_dim = obs_dim
         self.act_dim = act_dim
-        self.drv_dim = 2
+        self.ext_dim = 2
         self.data_folder = data_folder
-        self.exploration = OUNoise(self.drv_dim)
+        self.exploration = OUNoise(self.ext_dim)
 
     def run(self, env, episodes, steps):
         print(self.__class__.__name__)
@@ -32,7 +32,7 @@ class SAWrapper:
             print("%3d  Reward = %+7.0f  " % (ep, reward))
 
     def train(self, env, episodes, steps, save_every_episodes):
-        driver = DDQN(self.sess, self.env_id, self.drv_dim, self.drv_dim, self.data_folder, self.scope + '_driver')
+        driver = DDQN(self.sess, self.env_id, self.obs_dim, self.ext_dim, self.data_folder, self.scope + '_driver')
         worker = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
 
         for ep in range(episodes):
@@ -42,24 +42,23 @@ class SAWrapper:
             for t in range(steps):
                 env.render()
 
-                # extract world state
-                wn = self.drv_dim
-                drv_s = s[0:wn]
-                inn_s = s[wn:]
+                # set goal
+                drv_s = s
+                int_s = s[self.ext_dim:]
+                drv_a = driver.act(drv_s) + self.exploration.noise()
+                wrk_s = np.append(drv_a, int_s)
 
                 # execute step
-                drv_a = driver.act(drv_s)  # + self.exploration.noise()
-                wrk_s = np.append(drv_a, inn_s)
-                wrk_a = worker.actor.predict([wrk_s])
+                wrk_a = worker.act(wrk_s)
                 ns, r, done, info = env.step(wrk_a[0])
-                wrd_ns = ns[0:wn]
+                drv_ns = ns
                 s = ns
                 reward += r
 
                 # print(drv_s-drv_a[0])
 
                 # sample minibatch
-                driver.buff.add(drv_s, drv_a[0], r, wrd_ns, done)
+                driver.buff.add(drv_s, drv_a[0], r, drv_ns, done)
                 batch = driver.buff.getBatch(cfg.BATCH_SIZE)
                 states, actions, rewards, new_states, dones = zip(*batch)
 
@@ -81,7 +80,7 @@ class SAWrapper:
             if ep % save_every_episodes == 0:
                 driver.save()
 
-            print("%3d  Reward = %+7.0f  " % (ep, reward))
+            print("%3d  Reward = %+11.0f  " % (ep, reward))
 
     @property
     def scope(self):

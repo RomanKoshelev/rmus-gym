@@ -1,13 +1,15 @@
 TODO:
 
-> use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
-- train and save with tf.scopes
+> draw vector to goal
+- use whole agent's observations
 - experiments:
   - wrapper
   - two hands
   - see diagramm
 
 DONE:
++ use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
++ train and save with tf.scopes
 + implement wrapper agent
 + refactor: use agent class
   + create
