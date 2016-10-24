@@ -44,11 +44,11 @@ class SAWrapper:
 
                 # extract world state
                 wn = self.drv_dim
-                wrd_s = s[0:wn]
+                drv_s = s[0:wn]
                 inn_s = s[wn:]
 
                 # execute step
-                drv_a = driver.act(wrd_s)  # + self.exploration.noise()
+                drv_a = driver.act(drv_s)  # + self.exploration.noise()
                 wrk_s = np.append(drv_a, inn_s)
                 wrk_a = worker.actor.predict([wrk_s])
                 ns, r, done, info = env.step(wrk_a[0])
@@ -56,8 +56,10 @@ class SAWrapper:
                 s = ns
                 reward += r
 
+                # print(drv_s-drv_a[0])
+
                 # sample minibatch
-                driver.buff.add(wrd_s, drv_a[0], r, wrd_ns, done)
+                driver.buff.add(drv_s, drv_a[0], r, wrd_ns, done)
                 batch = driver.buff.getBatch(cfg.BATCH_SIZE)
                 states, actions, rewards, new_states, dones = zip(*batch)
 

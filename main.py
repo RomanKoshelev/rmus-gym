@@ -20,10 +20,11 @@ def main():
 
     # agent
     # agent = DDQN(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
-    agent = SAWrapper(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
-
-    agent.train(env, cfg.EPISODES, cfg.STEPS, cfg.SAVE_EPISODES)
+    # agent.train(env, cfg.EPISODES, cfg.STEPS, cfg.SAVE_EPISODES)
     # agent.run(env, cfg.EPISODES, cfg.STEPS)
+
+    agent = SAWrapper(sess, env.spec.id, obs_dim, act_dim, cfg.CHECKPOINT_FOLDER)
+    agent.train(env, cfg.EPISODES, cfg.STEPS, cfg.SAVE_EPISODES)
 
 if __name__ == '__main__':
     main()
