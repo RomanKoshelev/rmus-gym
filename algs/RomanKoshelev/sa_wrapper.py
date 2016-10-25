@@ -18,15 +18,24 @@ class SAWrapper:
         self.exploration = OUNoise(self.ext_dim)
 
     def run(self, env, episodes, steps):
-        print(self.__class__.__name__)
-        agent = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
+        driver = DDQN(self.sess, self.env_id, self.obs_dim, self.ext_dim, self.data_folder, self.scope + '_driver')
+        worker = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
         for ep in range(episodes):
-            s = env.reset()
-            reward = 0
+            s, reward, done = env.reset(), 0, False
+
             for t in range(steps):
                 env.render()
-                a = agent.act(s)
-                s, r, _, _ = env.step(a[0])
+
+                # set goal
+                drv_s = s
+                int_s = s[self.ext_dim:]
+                drv_a = driver.act(drv_s)
+                wrk_s = np.append(drv_a, int_s)
+
+                # execute step
+                wrk_a = worker.act(wrk_s)
+                ns, r, done, info = env.step(wrk_a[0])
+                s = ns
                 reward += r
 
             print("%3d  Reward = %+7.0f  " % (ep, reward))
@@ -45,7 +54,7 @@ class SAWrapper:
                 # set goal
                 drv_s = s
                 int_s = s[self.ext_dim:]
-                drv_a = driver.act(drv_s) + self.exploration.noise()
+                drv_a = driver.act(drv_s)  # + self.exploration.noise()
                 wrk_s = np.append(drv_a, int_s)
 
                 # execute step
@@ -54,8 +63,6 @@ class SAWrapper:
                 drv_ns = ns
                 s = ns
                 reward += r
-
-                # print(drv_s-drv_a[0])
 
                 # sample minibatch
                 driver.buff.add(drv_s, drv_a[0], r, drv_ns, done)
@@ -80,7 +87,7 @@ class SAWrapper:
             if ep % save_every_episodes == 0:
                 driver.save()
 
-            print("%3d  Reward = %+11.0f  " % (ep, reward))
+            print("%3d  Reward = %+7.0f  " % (ep, reward))
 
     @property
     def scope(self):

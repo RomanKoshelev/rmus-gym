@@ -1,7 +1,8 @@
 TODO:
 
-> draw vector to goal
-- use whole agent's observations
+> use whole agent's observations
+  - add dims to scope name (_12x45_)
+- draw vector to goal
 - experiments:
   - wrapper
   - two hands
