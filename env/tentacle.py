@@ -4,8 +4,7 @@ import Box2D
 import gym
 
 import numpy as np
-from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, contactListener, revoluteJointDef,
-                      weldJointDef)
+from Box2D.b2 import (circleShape, fixtureDef, polygonShape, revoluteJointDef, weldJointDef)
 from gym import spaces
 from gym.utils import seeding
 
@@ -263,8 +262,6 @@ class Tentacle(gym.Env):
         rw_dist = - 10. * (d ** 2)
         rw_act = - 1. * (np.sum(np.abs(action) * (0.9, 0.3, 0.1)))  # type: float
 
-        # print("%+8.2f %+8.2f %+8.2f " % (rw_touch, rw_dist, rw_act))
-
         return rw_touch + rw_dist + rw_act
 
     # endregion
@@ -306,7 +303,27 @@ class Tentacle(gym.Env):
                     path.append(path[0])
                     self.viewer.draw_polyline(path, color=obj.color2, linewidth=2)
 
+        self.draw_extra()
+
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+
+    def draw_extra(self):
+        from gym.envs.classic_control import rendering
+        head = self.tentacle[len(self.tentacle) - 1]
+        x, y, r = head.position[0], head.position[1], 0.1
+        d = self.metadata.get('extra')
+
+        f = head.fixtures[0]
+        trans = f.body.transform
+
+        if d is None:
+            return
+
+        t = rendering.Transform(translation=trans * f.shape.pos+ (float(d[0]), float(d[1])))
+        self.viewer.draw_circle(r, color=(1., 1., 0.)).add_attr(t)
+
+        t = rendering.Transform(translation=trans * f.shape.pos)
+        self.viewer.draw_line(start=(0, 0), end=d, color=(1., 1., 0.)).add_attr(t)
 
     # endregion
 

@@ -1,9 +1,9 @@
 from __future__ import print_function
 
 import numpy as np
-import algs.PeterKovacs.config as cfg
-from algs.PeterKovacs.ddqn import DDQN
-from algs.PeterKovacs.ou_noise import OUNoise
+import alg.PeterKovacs.config as cfg
+from alg.PeterKovacs.ddqn import DDQN
+from alg.PeterKovacs.ou_noise import OUNoise
 
 
 class SAWrapper:
@@ -24,8 +24,6 @@ class SAWrapper:
             s, reward, done = env.reset(), 0, False
 
             for t in range(steps):
-                env.render()
-
                 # set goal
                 drv_s = s
                 int_s = s[self.ext_dim:]
@@ -38,6 +36,10 @@ class SAWrapper:
                 s = ns
                 reward += r
 
+                # render
+                env.metadata['extra'] = -drv_a[0]
+                env.render()
+
             print("%3d  Reward = %+7.0f  " % (ep, reward))
 
     def train(self, env, episodes, steps, save_every_episodes):
@@ -47,14 +49,13 @@ class SAWrapper:
         for ep in range(episodes):
             s, reward, done = env.reset(), 0, False
             self.exploration.reset()
+            noise_rate = max(0., 1. - ep / 1000)
 
             for t in range(steps):
-                env.render()
-
                 # set goal
                 drv_s = s
                 int_s = s[self.ext_dim:]
-                drv_a = driver.act(drv_s)  # + self.exploration.noise()
+                drv_a = driver.act(drv_s) + (self.exploration.noise() * noise_rate)  # type: np.ndarray
                 wrk_s = np.append(drv_a, int_s)
 
                 # execute step
@@ -83,6 +84,10 @@ class SAWrapper:
                 # update the target networks
                 driver.actor.target_train()
                 driver.critic.target_train()
+
+                # render
+                env.metadata['extra'] = -drv_a[0]
+                env.render()
 
             if ep % save_every_episodes == 0:
                 driver.save()

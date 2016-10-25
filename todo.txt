@@ -1,14 +1,19 @@
 TODO:
 
-> use whole agent's observations
+- use [0..1] for all inputs and outputs
+  - rewrite env
+  - rewrite alg
+  - add clips
+  - add asserts
+- use whole agent's observations
   - add nn arch to scope name (_12x100x400x45_)
-- draw vector to goal
 - experiments:
   - wrapper
   - two hands
   - see diagramm
 
 DONE:
++ draw vector to goal
 + use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
 + train and save with tf.scopes
 + implement wrapper agent
