@@ -1,7 +1,7 @@
 TODO:
 
 > use whole agent's observations
-  - add dims to scope name (_12x45_)
+  - add nn arch to scope name (_12x100x400x45_)
 - draw vector to goal
 - experiments:
   - wrapper
