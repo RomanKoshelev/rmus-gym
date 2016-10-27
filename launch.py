@@ -23,4 +23,4 @@ def launch(proc, data_folder, agent_class, env_name, episodes=1025000, steps=100
 
 if __name__ == '__main__':
     from alg.RomanKoshelev.sa_wrapper import SAWrapper
-    launch('train', 'superagent/4', SAWrapper, 'Tentacle-v0', steps=100)
+    launch('train', 'superagent/5', SAWrapper, 'Tentacle-v0', steps=100)

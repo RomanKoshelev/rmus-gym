@@ -50,16 +50,17 @@ class SAWrapper:
             s, reward, done = env.reset(), 0, False
             self.exploration.reset()
 
-            noise_rate = max(0., 1. - float(ep) / 1000.)
+            noise_rate = max(0., 1. - float(ep) / 10000.)
 
             for t in range(steps):
                 # set goal
                 drv_s = s
                 int_s = s[self.ext_dim:]
-                R = 3
+                DA = 5.
+                DN = DA / 2.
                 drv_a = driver.act(drv_s)  # type: np.ndarray
-                drv_a = np.clip(drv_a, [-R, -R], [R, R])
-                drv_a += R * noise_rate * self.exploration.noise()
+                drv_a = np.clip(drv_a, [-DA, -DA], [DA, DA])
+                drv_a += DN * noise_rate * self.exploration.noise()
                 wrk_s = np.append(drv_a, int_s)
 
                 # execute step

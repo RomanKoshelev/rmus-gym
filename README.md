@@ -1,10 +1,10 @@
 ADDITIVE REINFORCEMENT LEARNING:
 
 - IDEA:
-  - reuse pretrained skills,
+  - reuse pretrained skills
   - compose superagent from ready-to-use units
   - learn superagent's driver to manipulate with units
-  - method: warp unit's observations,
+  - method: warp unit's observations
   - problem: detect and isolate external and internal observations
 
 - PROFIT:
