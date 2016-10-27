@@ -49,13 +49,17 @@ class SAWrapper:
         for ep in range(episodes):
             s, reward, done = env.reset(), 0, False
             self.exploration.reset()
-            noise_rate = max(0., 1. - ep / 1000)
+
+            noise_rate = max(0., 1. - float(ep) / 1000.)
 
             for t in range(steps):
                 # set goal
                 drv_s = s
                 int_s = s[self.ext_dim:]
-                drv_a = driver.act(drv_s) + (self.exploration.noise() * noise_rate)  # type: np.ndarray
+                R = 3
+                drv_a = driver.act(drv_s)  # type: np.ndarray
+                drv_a = np.clip(drv_a, [-R, -R], [R, R])
+                drv_a += R * noise_rate * self.exploration.noise()
                 wrk_s = np.append(drv_a, int_s)
 
                 # execute step
@@ -89,10 +93,10 @@ class SAWrapper:
                 env.metadata['extra'] = -drv_a[0]
                 env.render()
 
-            if ep % save_every_episodes == 0:
+            if ep > 0 and ep % save_every_episodes == 0:
                 driver.save()
 
-            print("%3d  Reward = %+7.0f  " % (ep, reward))
+            print("%3d  RW = %+7.0f     NR = %.3f" % (ep, reward, noise_rate))
 
     @property
     def scope(self):
