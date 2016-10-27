@@ -14,7 +14,7 @@ ADDITIVE REINFORCEMENT LEARNING:
   - rectifiable learning procces (introducing compensation to achive goals by new ways open by driver)
   - transfer the skills as weight from one agent to other (from arm to leg, left to righ etc) and tune via driver
 
-- CHALENGE:
+- CHALLENGE:
   - utilize the human-mentors intuition to improve the RL preformance
   - separate ext/eig observations to generate explicit tasks between units
   - learn by samples -- looking for profy and try to repeat the solution by self (mirror neurons)
