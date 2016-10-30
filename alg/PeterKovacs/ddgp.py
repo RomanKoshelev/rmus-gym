@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 
+import numpy as np
 import tensorflow as tf
 import config as cfg
 from replay_buffer import ReplayBuffer
@@ -16,6 +17,7 @@ class DDGP:
         self.prefix = prefix
         self.env_id = env_id
 
+        print("obs_dim=%d, act_dim=%d" % (obs_dim, act_dim))
         with tf.variable_scope(self.scope):
             with tf.variable_scope("actor"):
                 self.actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
@@ -51,7 +53,7 @@ class DDGP:
 
                 # set target
                 target_q = self.critic.target_predict(new_states, self.actor.target_predict(new_states))
-                y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else 0) for i in range(len(batch))]
+                y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else [0]) for i in range(len(batch))]
 
                 # update critic
                 self.critic.train(y, states, actions)

@@ -5,7 +5,6 @@ HIDDEN2_UNITS = 300
 
 
 class CriticNetwork(object):
-
     def __init__(self, sess, state_size, action_size, BATCH_SIZE, TAU, LEARNING_RATE, L2):
         self.sess = sess
         self.BATCH_SIZE = BATCH_SIZE
@@ -15,7 +14,7 @@ class CriticNetwork(object):
 
         with tf.variable_scope("master"):
             self.state, self.action, self.out, self.net = \
-                    self.create_critic_network(state_size, action_size)
+                self.create_critic_network(state_size, action_size)
 
         with tf.variable_scope("target"):
             self.target_state, self.target_action, self.target_update, self.target_net, self.target_out = \
