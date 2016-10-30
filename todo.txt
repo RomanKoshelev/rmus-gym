@@ -1,10 +1,7 @@
 TODO:
 
-- use [0..1] for all inputs and outputs
-  - rewrite env
-  - rewrite alg
-  - add clips
-  - add asserts
+- use clipping for actions
+- use action_size for for noise (see loanaCheu/AgentDDPG line 17)
 - use whole agent's observations
   - add h1 h2 to DQNN args
   - add nn arch to scope name (_12x100x400x45_)

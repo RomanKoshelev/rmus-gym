@@ -26,5 +26,5 @@ if __name__ == '__main__':
     # launch('train', 'superagent/6', SAWrapper, 'Tentacle-v0', steps=100)
 
     from alg.PeterKovacs.ddgp import DDGP
-    launch('train', 'unit', DDGP, 'Walker2d-v1', steps=300)
+    launch('train', 'unit', DDGP, 'Ant-v1', steps=3000)
     # launch('run', 'unit', DDQN, 'Reacher-v1', steps=100)
