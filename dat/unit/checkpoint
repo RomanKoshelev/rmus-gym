@@ -1,2 +1,2 @@
-model_checkpoint_path: "DDQN_Tentacle_v0.ckpt"
-all_model_checkpoint_paths: "DDQN_Tentacle_v0.ckpt"
+model_checkpoint_path: "DDGP_HumanoidStandup_v1.ckpt"
+all_model_checkpoint_paths: "DDGP_HumanoidStandup_v1.ckpt"

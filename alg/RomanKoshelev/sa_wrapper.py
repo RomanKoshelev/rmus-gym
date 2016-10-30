@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 import alg.PeterKovacs.config as cfg
-from alg.PeterKovacs.ddqn import DDQN
+from alg.PeterKovacs.ddgp import DDGP
 from alg.PeterKovacs.ou_noise import OUNoise
 
 
@@ -18,8 +18,8 @@ class SAWrapper:
         self.exploration = OUNoise(self.ext_dim)
 
     def run(self, env, episodes, steps):
-        driver = DDQN(self.sess, self.env_id, self.obs_dim, self.ext_dim, self.data_folder, self.scope + '_driver')
-        worker = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
+        driver = DDGP(self.sess, self.env_id, self.obs_dim, self.ext_dim, self.data_folder, self.scope + '_driver')
+        worker = DDGP(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
         for ep in range(episodes):
             s, reward, done = env.reset(), 0, False
 
@@ -43,14 +43,14 @@ class SAWrapper:
             print("%3d  Reward = %+7.0f  " % (ep, reward))
 
     def train(self, env, episodes, steps, save_every_episodes):
-        driver = DDQN(self.sess, self.env_id, self.obs_dim, self.ext_dim, self.data_folder, self.scope + '_driver')
-        worker = DDQN(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
+        driver = DDGP(self.sess, self.env_id, self.obs_dim, self.ext_dim, self.data_folder, self.scope + '_driver')
+        worker = DDGP(self.sess, self.env_id, self.obs_dim, self.act_dim, self.data_folder)
 
         for ep in range(episodes):
             s, reward, done = env.reset(), 0, False
             self.exploration.reset()
 
-            noise_rate = max(0., 1. - float(ep) / 10000.)
+            noise_rate = max(0., 1. - float(ep) / episodes)
 
             for t in range(steps):
                 # set goal

@@ -22,5 +22,9 @@ def launch(proc, data_folder, agent_class, env_name, episodes=1025000, steps=100
         agent.run(env, episodes, steps)
 
 if __name__ == '__main__':
-    from alg.RomanKoshelev.sa_wrapper import SAWrapper
-    launch('train', 'superagent/5', SAWrapper, 'Tentacle-v0', steps=100)
+    # from alg.RomanKoshelev.sa_wrapper import SAWrapper
+    # launch('train', 'superagent/6', SAWrapper, 'Tentacle-v0', steps=100)
+
+    from alg.PeterKovacs.ddgp import DDGP
+    launch('train', 'unit', DDGP, 'HumanoidStandup-v1', steps=300)
+    # launch('run', 'unit', DDQN, 'Reacher-v1', steps=100)

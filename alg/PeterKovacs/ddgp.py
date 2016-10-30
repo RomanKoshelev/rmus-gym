@@ -10,7 +10,7 @@ from critic_network import CriticNetwork
 from ou_noise import OUNoise
 
 
-class DDQN:
+class DDGP:
     def __init__(self, sess, env_id, obs_dim, act_dim, data_folder, prefix=None):
         self.sess = sess
         self.prefix = prefix
@@ -68,7 +68,7 @@ class DDQN:
                 s = ns
                 reward += r
 
-            if ep % save_every_episodes == 0:
+            if ep > 0 and ep % save_every_episodes == 0:
                 self.save()
 
             print("%3d  Reward = %+7.0f  " % (ep, reward))
