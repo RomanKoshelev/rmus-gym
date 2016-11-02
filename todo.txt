@@ -1,26 +1,12 @@
 TODO:
 
-- use clipping for actions
+- Make test file
+- use clipping for actions (tanh ativation)
 - use action_size for for noise (see loanaCheu/AgentDDPG line 17)
 - use whole agent's observations
-  - add h1 h2 to DQNN args
-  - add nn arch to scope name (_12x100x400x45_)
-- experiments:
-  + wrapper
-  - two hands
-  - see diagramm
-- improve env model
-  - add cost for sharp junction angles
-  - add to obs: explicit target and head coords
-
-- learning performance
-  - decade LR
-  - store learning episodes number in th.var and restore it
-  - save/load the reply buffer
-  - batch normalization
-  - multy env learning
-  - dual network
-
+- add h1 h2 to DQNN args
+- add nn arch to scope name (_12x100x400x45_)
+- Test the Algorithm on current Mujoco-based OpenAI-Gym environment (should learn in appropriate time)
 
 
 DONE:
@@ -68,3 +54,18 @@ view:
 - http://videolectures.net/rldm2015_silver_reinforcement_learning/
 - selected alg
 
+- experiments:
+  + wrapper
+  - two hands
+  - see diagramm
+- improve env model
+  - add cost for sharp junction angles
+  - add to obs: explicit target and head coords
+
+- learning performance
+  - decade LR
+  - store learning episodes number in th.var and restore it
+  - save/load the reply buffer
+  - batch normalization
+  - multy env learning
+  - dual network
