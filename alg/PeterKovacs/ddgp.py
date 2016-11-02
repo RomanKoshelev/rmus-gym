@@ -8,15 +8,18 @@ from replay_buffer import ReplayBuffer
 from actor_network import ActorNetwork
 from critic_network import CriticNetwork
 from ou_noise import OUNoise
+import numpy as np
 
 
 class DDGP:
-    def __init__(self, sess, env_id, obs_dim, act_dim, data_folder, prefix=None):
+    def __init__(self, sess, env_id, obs_dim, obs_box, act_dim, act_box, data_folder, prefix=None):
         self.sess = sess
         self.prefix = prefix
         self.env_id = env_id
         self.obs_dim = obs_dim
+        self.obs_box = obs_box
         self.act_dim = act_dim
+        self.act_box = act_box
 
         with tf.variable_scope(self.scope):
             with tf.variable_scope("actor"):
@@ -28,7 +31,7 @@ class DDGP:
         self.sess.run(tf.initialize_variables(var_list))
 
         self.buff = ReplayBuffer(cfg.BUFFER_SIZE)
-        self.exploration = OUNoise(act_dim)
+        self.exploration = OUNoise(act_dim, mu=0.5, sigma=0.1)
 
         self.saver = tf.train.Saver(var_list)
         self.data_folder = data_folder
@@ -36,15 +39,31 @@ class DDGP:
         self.pint_summury()
 
     def train(self, env, episodes, steps, save_every_episodes):
+
         for ep in range(episodes):
             s, reward, done = env.reset(), 0, False
             self.exploration.reset()
 
+            # calc noise rate
+            nr_min = .5
+            nr_max = 1.
+            nr_ep = episodes / 10
+            nr_k = 1 - min(1, (float(ep) / nr_ep))
+            nr = nr_min + nr_k * (nr_max - nr_min)
+
             for t in range(steps):
                 env.render()
 
+                # calc action
+                a = self.actor.predict([s])  # type: np.ndarray
+                n = self.exploration.noise()
+                a = (1 - nr) * a + nr * n
+                a = np.clip(a, 0, 1)
+                a = self.act_box[0] + a * (self.act_box[1] - self.act_box[0])
+                # print(a)
+                # self.verify_actions(a)
+
                 # execute step
-                a = self.actor.predict([s]) + self.exploration.noise()
                 ns, r, done, info = env.step(a[0])
                 self.buff.add(s, a[0], r, ns, done)
 
@@ -74,7 +93,7 @@ class DDGP:
             if ep > 0 and ep % save_every_episodes == 0:
                 self.save()
 
-            self.print_progress(ep, reward)
+            self.print_progress(ep, reward, nr)
 
     def run(self, env, episodes, steps):
         for ep in range(episodes):
@@ -116,10 +135,21 @@ class DDGP:
         return os.path.join(self.data_folder, self.scope + ".ckpt")
 
     def pint_summury(self):
-        print("==========================")
-        print("obs_dim: %3d" % self.obs_dim)
-        print("act_dim: %3d" % self.act_dim)
-        print("==========================")
+        print("\n==============================================================================")
+        print("obs_dim: %d" % self.obs_dim)
+        print("obs_box: %s" % self.obs_box[0])
+        print("         %s" % self.obs_box[1])
+        print("act_dim: %d" % self.act_dim)
+        print("act_box: %s" % self.act_box[0])
+        print("         %s" % self.act_box[1])
+        print("==============================================================================\n")
 
-    def print_progress(self, ep, reward):
-        print("%3d  Reward = %+7.0f  " % (ep, reward))
+    def print_progress(self, ep, reward, nr):
+        print("%3d  Reward = %+7.0f   nr = %.2f" % (ep, reward, nr))
+
+    def verify_actions(self, batch_actions):
+        for action in batch_actions:
+            res = action >= self.act_box[0]  # type: np.ndarray
+            assert res.all(), "action=%f" % action
+            res = action <= self.act_box[1]  # type: np.ndarray
+            assert res.all(), "action=%f" % action

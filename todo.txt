@@ -1,14 +1,11 @@
 TODO:
 
-- use clipping for actions (tanh ativation)
-- use action_size for for noise (see loanaCheu/AgentDDPG line 17)
-- use whole agent's observations
-- add h1 h2 to DQNN args
-- add nn arch to scope name (_12x100x400x45_)
 - Test the Algorithm on current Mujoco-based OpenAI-Gym environment (should learn in appropriate time)
 
 
 DONE:
++ use clipping for actions (tanh ativation)
++ use action_size for for noise (see loanaCheu/AgentDDPG line 17)
 + Make test file
 + draw vector to goal
 + use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
@@ -41,6 +38,9 @@ DONE:
 
 
 LATER:
+- add h1 h2 to DDGP args
+- add nn arch to scope name (_12x100x400x45_)
+- in superagent: use whole agent's observations
 - add cost for sharp junction angles
 - add more segments
 - create spiders

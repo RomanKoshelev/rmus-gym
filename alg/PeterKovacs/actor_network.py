@@ -36,25 +36,20 @@ class ActorNetwork(object):
         batch_actions = self.sess.run(self.out, feed_dict={
             self.state: states
         })
-        for action in batch_actions:
-            for a in action:
-                assert 0 <= a <= 1, "a=%f" % a
+        self.verify_actions(batch_actions)
         return batch_actions
 
     def target_predict(self, states):
         batch_actions = self.sess.run(self.target_out, feed_dict={
             self.target_state: states
         })
-        for action in batch_actions:
-            for a in action:
-                assert 0 <= a <= 1, "a=%f" % a
+        self.verify_actions(batch_actions)
         return batch_actions
 
     def target_train(self):
         self.sess.run(self.target_update)
 
     def crate_actor_target_network(self, input_dim, net):
-        # input
         state = tf.placeholder(tf.float32, shape=[None, input_dim], name='state')
 
         ema = tf.train.ExponentialMovingAverage(decay=1 - self.TAU)
@@ -68,10 +63,8 @@ class ActorNetwork(object):
         return state, target_update, target_net, out
 
     def create_actor_network(self, input_dim, output_dim):
-        # input
         state = tf.placeholder(tf.float32, shape=[None, input_dim], name='state')
 
-        # network weights
         W1 = self.weight_variable([input_dim, HIDDEN1_UNITS])
         b1 = self.bias_variable([HIDDEN1_UNITS])
         W2 = self.weight_variable([HIDDEN1_UNITS, HIDDEN2_UNITS])
@@ -79,7 +72,6 @@ class ActorNetwork(object):
         W3 = self.weight_variable([HIDDEN2_UNITS, output_dim])
         b3 = self.bias_variable([output_dim])
 
-        # computation
         h1 = tf.nn.relu(tf.matmul(state, W1) + b1)
         h2 = tf.nn.relu(tf.matmul(h1, W2) + b2)
         out = tf.sigmoid(tf.matmul(h2, W3) + b3)
@@ -93,3 +85,9 @@ class ActorNetwork(object):
     def bias_variable(self, shape):
         initial = tf.constant(0.01, shape=shape)
         return tf.Variable(initial)
+
+    def verify_actions(self, batch_actions):
+        for action in batch_actions:
+            for a in action:
+                assert -0.001 <= a <= 1.001, "a=%f" % a
+

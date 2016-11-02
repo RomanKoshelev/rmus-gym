@@ -19,6 +19,8 @@ def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes, re
     env = gym.make(env_name)
     obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.shape[0]
+    obs_box = [env.observation_space.low, env.observation_space.high]
+    act_box = [env.action_space.low, env.action_space.high]
 
     path = os.path.join(BASE_PATH, func_name())
     if not reuse_weights and os.path.exists(path):
@@ -27,7 +29,7 @@ def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes, re
     if not os.path.exists(path):
         os.makedirs(path)
 
-    agent = agent_class(sess, env.spec.id, obs_dim, act_dim, path)
+    agent = agent_class(sess, env.spec.id, obs_dim, obs_box, act_dim, act_box, path)
     if proc == 'train':
         agent.train(env, episodes, steps, save_every_episodes)
     elif proc == 'run':
@@ -36,7 +38,7 @@ def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes, re
 
 def test_train_tentacle():
     from alg.PeterKovacs.ddgp import DDGP
-    launch('train', DDGP, 'Tentacle-v0', episodes=1000, steps=100, save_every_episodes=10)
+    launch('train', DDGP, 'Tentacle-v0', episodes=10000, steps=100, save_every_episodes=100)
 
 
 if __name__ == '__main__':
