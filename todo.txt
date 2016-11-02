@@ -1,6 +1,5 @@
 TODO:
 
-- Make test file
 - use clipping for actions (tanh ativation)
 - use action_size for for noise (see loanaCheu/AgentDDPG line 17)
 - use whole agent's observations
@@ -10,6 +9,7 @@ TODO:
 
 
 DONE:
++ Make test file
 + draw vector to goal
 + use scope for saving: http://stackoverflow.com/questions/36533723/tensorflow-get-all-variables-in-scope
 + train and save with tf.scopes

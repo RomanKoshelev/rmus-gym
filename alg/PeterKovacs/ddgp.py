@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import os
 
-import numpy as np
 import tensorflow as tf
 import config as cfg
 from replay_buffer import ReplayBuffer
@@ -16,8 +15,9 @@ class DDGP:
         self.sess = sess
         self.prefix = prefix
         self.env_id = env_id
+        self.obs_dim = obs_dim
+        self.act_dim = act_dim
 
-        print("obs_dim=%d, act_dim=%d" % (obs_dim, act_dim))
         with tf.variable_scope(self.scope):
             with tf.variable_scope("actor"):
                 self.actor = ActorNetwork(sess, obs_dim, act_dim, cfg.BATCH_SIZE, cfg.TAU, cfg.LRA, cfg.L2A)
@@ -33,6 +33,7 @@ class DDGP:
         self.saver = tf.train.Saver(var_list)
         self.data_folder = data_folder
         self.load()
+        self.pint_summury()
 
     def train(self, env, episodes, steps, save_every_episodes):
         for ep in range(episodes):
@@ -73,7 +74,7 @@ class DDGP:
             if ep > 0 and ep % save_every_episodes == 0:
                 self.save()
 
-            print("%3d  Reward = %+7.0f  " % (ep, reward))
+            self.print_progress(ep, reward)
 
     def run(self, env, episodes, steps):
         for ep in range(episodes):
@@ -113,3 +114,12 @@ class DDGP:
         if self.data_folder is None:
             return None
         return os.path.join(self.data_folder, self.scope + ".ckpt")
+
+    def pint_summury(self):
+        print("==========================")
+        print("obs_dim: %3d" % self.obs_dim)
+        print("act_dim: %3d" % self.act_dim)
+        print("==========================")
+
+    def print_progress(self, ep, reward):
+        print("%3d  Reward = %+7.0f  " % (ep, reward))

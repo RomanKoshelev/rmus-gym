@@ -9,6 +9,7 @@ import numpy as np
 import numpy.random as nr
 
 
+# noinspection PyArgumentList
 class OUNoise:
     """docstring for OUNoise"""
 
@@ -24,7 +25,7 @@ class OUNoise:
         self.state = np.ones(self.action_dimension) * self.mu
 
     def noise(self):
-        x = self.state
+        x = self.state  # type: np.ndarray
         dx = self.theta * (self.mu - x) + self.sigma * nr.randn(len(x))
         self.state = x + dx
         return self.state
