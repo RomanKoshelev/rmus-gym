@@ -31,7 +31,7 @@ class DDPG:
         self.sess.run(tf.initialize_variables(var_list))
 
         self.buff = ReplayBuffer(cfg.BUFFER_SIZE)
-        self.exploration = OUNoise(act_dim, mu=0.5, sigma=0.1)
+        self.exploration = OUNoise(act_dim, mu=0., sigma=0.2)
 
         self.saver = tf.train.Saver(var_list)
         self.data_folder = data_folder
@@ -45,8 +45,8 @@ class DDPG:
             self.exploration.reset()
 
             # calc noise rate
-            nr_min = .5
-            nr_max = 1.
+            nr_min = .2
+            nr_max = 0.99
             nr_ep = episodes / 10
             nr_k = 1 - min(1, (float(ep) / nr_ep))
             nr = nr_min + nr_k * (nr_max - nr_min)
@@ -57,14 +57,20 @@ class DDPG:
                 # calc action
                 a = self.actor.predict([s])  # type: np.ndarray
                 n = self.exploration.noise()
+                # a = np.clip(a, self.act_box[0], self.act_box[1])
                 a = (1 - nr) * a + nr * n
-                a = np.clip(a, 0, 1)
-                a = self.act_box[0] + a * (self.act_box[1] - self.act_box[0])
+
+                # todo: use act_box
+                ae = a * 100.  # type: np.ndarray
+
+                # print()
+                # print(n)
                 # print(a)
+
                 # self.verify_actions(a)
 
                 # execute step
-                ns, r, done, info = env.step(a[0])
+                ns, r, done, info = env.step(ae[0])
                 self.buff.add(s, a[0], r, ns, done)
 
                 # sample minibatch

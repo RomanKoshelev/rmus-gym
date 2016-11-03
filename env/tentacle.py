@@ -51,7 +51,7 @@ class Tentacle(gym.Env):
         self.tentacle = None
         self.need_destroy = False
 
-        self.action_space = spaces.Box(np.array([-3., -2., -1.]), np.array([3., 2., 1.]))
+        self.action_space = spaces.Box(np.array([-130., -120., -110.]), np.array([130., 120., 110.]))
         self.observation_space = spaces.Box(low=-100, high=100, shape=(2 + 3 * 3,))
 
         self._reset()

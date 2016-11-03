@@ -38,7 +38,7 @@ def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes, re
 
 def test_train_tentacle():
     from alg.PeterKovacs.ddpg import DDPG
-    launch('train', DDPG, 'Tentacle-v0', episodes=10000, steps=100, save_every_episodes=100)
+    launch('train', DDPG, 'Tentacle-v0', episodes=20000, steps=100, save_every_episodes=100, reuse_weights=False)
 
 
 if __name__ == '__main__':

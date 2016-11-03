@@ -58,7 +58,7 @@ class ActorNetwork(object):
 
         h1 = tf.nn.relu(tf.matmul(state, target_net[0]) + target_net[1])
         h2 = tf.nn.relu(tf.matmul(h1, target_net[2]) + target_net[3])
-        out = tf.sigmoid(tf.matmul(h2, target_net[4]) + target_net[5])
+        out = tf.tanh(tf.matmul(h2, target_net[4]) + target_net[5])
 
         return state, target_update, target_net, out
 
@@ -74,7 +74,7 @@ class ActorNetwork(object):
 
         h1 = tf.nn.relu(tf.matmul(state, W1) + b1)
         h2 = tf.nn.relu(tf.matmul(h1, W2) + b2)
-        out = tf.sigmoid(tf.matmul(h2, W3) + b3)
+        out = tf.tanh(tf.matmul(h2, W3) + b3)
 
         return state, out, [W1, b1, W2, b2, W3, b3]
 
@@ -89,5 +89,6 @@ class ActorNetwork(object):
     def verify_actions(self, batch_actions):
         for action in batch_actions:
             for a in action:
-                assert -0.001 <= a <= 1.001, "a=%f" % a
+                pass
+                assert -1.001 <= a <= 1.001, "a=%f" % a
 
