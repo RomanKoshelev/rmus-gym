@@ -11,7 +11,7 @@ from ou_noise import OUNoise
 import numpy as np
 
 
-class DDGP:
+class DDPG:
     def __init__(self, sess, env_id, obs_dim, obs_box, act_dim, act_box, data_folder, prefix=None):
         self.sess = sess
         self.prefix = prefix
