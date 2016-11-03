@@ -1,5 +1,6 @@
 TODO:
 
+- save reward to tensorboard
 - Test the Algorithm on current Mujoco-based OpenAI-Gym environment (should learn in appropriate time)
 
 
