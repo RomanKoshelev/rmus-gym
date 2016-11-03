@@ -1,11 +1,11 @@
 TODO:
 
-+ fix qqpg
 - save reward to tensorboard
 - Test the Algorithm on current Mujoco-based OpenAI-Gym environment (should learn in appropriate time)
 
 
 DONE:
++ fix qqpg
 + use clipping for actions (tanh ativation)
 + use action_size for for noise (see loanaCheu/AgentDDPG line 17)
 + Make test file
