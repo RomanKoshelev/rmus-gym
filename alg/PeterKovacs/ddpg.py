@@ -45,9 +45,9 @@ class DDPG:
             self.exploration.reset()
 
             # calc noise rate
-            nr_min = .2
+            nr_min = .1
             nr_max = 0.99
-            nr_ep = episodes / 10
+            nr_ep = episodes / 2
             nr_k = 1 - min(1, (float(ep) / nr_ep))
             nr = nr_min + nr_k * (nr_max - nr_min)
 
@@ -55,19 +55,17 @@ class DDPG:
                 env.render()
 
                 # calc action
-                a = self.actor.predict([s])  # type: np.ndarray
+                a = self.actor.predict([s])
                 n = self.exploration.noise()
-                # a = np.clip(a, self.act_box[0], self.act_box[1])
-                a = (1 - nr) * a + nr * n
+                a = (1 - nr) * a + nr * n  # type: np.ndarray
 
-                # todo: use act_box
-                ae = a * 100.  # type: np.ndarray
-
-                # print()
-                # print(n)
-                # print(a)
-
-                # self.verify_actions(a)
+                # fit action to action box
+                act_low = self.act_box[0]
+                act_amp = self.act_box[1] - self.act_box[0]
+                ak = (a + 1.) / 2.
+                ae = act_low + act_amp * ak  # type: np.ndarray
+                ae = np.clip(ae, self.act_box[0], self.act_box[1])
+                self.verify_actions(ae)
 
                 # execute step
                 ns, r, done, info = env.step(ae[0])

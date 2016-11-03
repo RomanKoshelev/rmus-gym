@@ -38,8 +38,24 @@ def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes, re
 
 def test_train_tentacle():
     from alg.PeterKovacs.ddpg import DDPG
-    launch('train', DDPG, 'Tentacle-v0', episodes=20000, steps=100, save_every_episodes=100, reuse_weights=False)
+    launch('train', DDPG, 'Tentacle-v0', episodes=20000, steps=100, save_every_episodes=100, reuse_weights=True)
+
+
+def test_train_ant():
+    from alg.PeterKovacs.ddpg import DDPG
+    launch('train', DDPG, 'Ant-v1', episodes=10000, steps=500, save_every_episodes=100, reuse_weights=False)
+
+
+def test_train_reacher():
+    from alg.PeterKovacs.ddpg import DDPG
+    launch('train', DDPG, 'Reacher-v1', episodes=10000, steps=300, save_every_episodes=100, reuse_weights=False)
+
+
+def test_train_humanoid_standup():
+    from alg.PeterKovacs.ddpg import DDPG
+    launch('train', DDPG, 'HumanoidStandup-v1', episodes=10000, steps=500, save_every_episodes=100,
+           reuse_weights=False)
 
 
 if __name__ == '__main__':
-    test_train_tentacle()
+    test_train_reacher()
