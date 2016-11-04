@@ -1,9 +1,6 @@
 TODO:
 
-- take `done` into accoun:
-    ENV.timestep_limit=50,
-    ENV.reward_threshold=-3.75,
-
+- print env name and limits in summary
 - store learning episodes number in th.var and restore it
 - save/load the reply buffer
 - save reward to tensorboard every episode
@@ -12,6 +9,7 @@ TODO:
 
 
 DONE:
++ take `done` into accoun:
 + fix qqpg
 + use clipping for actions (tanh ativation)
 + use action_size for for noise (see loanaCheu/AgentDDPG line 17)

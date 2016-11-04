@@ -40,11 +40,11 @@ class DDPG:
 
     def train(self, env, episodes, steps, save_every_episodes):
 
-        for ep in range(episodes):
+        for ep in xrange(episodes):
             s, reward, done = env.reset(), 0, False
             self.exploration.reset()
 
-            for t in range(steps):
+            for t in xrange(steps):
                 env.render()
 
                 # add noise to action
@@ -54,15 +54,13 @@ class DDPG:
                 ns, r, done, info = env.step(self.fit_to_env(a))
                 self.buff.add(s, a[0], r, ns, done)
 
-                # todo: take `done` into accoun!!
-
                 # sample minibatch
                 batch = self.buff.getBatch(cfg.BATCH_SIZE)
                 states, actions, rewards, new_states, dones = zip(*batch)
 
                 # set target
                 target_q = self.critic.target_predict(new_states, self.actor.target_predict(new_states))
-                y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else [0]) for i in range(len(batch))]
+                y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else [0.]) for i in range(len(batch))]
 
                 # update critic
                 self.critic.train(y, states, actions)
@@ -79,10 +77,12 @@ class DDPG:
                 s = ns
                 reward += r
 
-            if ep > 0 and ep % save_every_episodes == 0:
-                self.save()
+                if done or (t == steps - 1):
+                    self.print_progress(ep, reward)
+                    break
 
-            self.print_progress(ep, reward)
+            if (ep > 0 and ep % save_every_episodes == 0) or (ep == episodes - 1):
+                self.save()
 
     def fit_to_env(self, a):
         ak = (a + 1.) / 2.

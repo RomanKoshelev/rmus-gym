@@ -8,7 +8,7 @@ from alg.PeterKovacs.ddpg import DDPG
 BASE_PATH = '../out/tests/'
 
 
-def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes=100, reuse_weights=False):
+def launch(proc, agent_class, env_name, episodes=125000, steps=3000, save_every_episodes=100, reuse_weights=False):
     def func_name():
         import traceback
         return traceback.extract_stack(None, 3)[0][2]
@@ -37,30 +37,37 @@ def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes=100
         agent.run(env, episodes, steps)
 
 
-def test_train_tentacle():
+def Tentacle():
     launch('train', DDPG, 'Tentacle-v0', episodes=20000, steps=100, reuse_weights=True)
 
 
-def test_train_ant():
+def Ant():
     launch('train', DDPG, 'Ant-v1', episodes=10000, steps=200, reuse_weights=True)
 
 
-def test_train_reacher():
+def Reacher():
     launch('train', DDPG, 'Reacher-v1', episodes=10000, steps=100, reuse_weights=True)
 
 
-def test_train_humanoid_standup():
+def HumanoidStandup():
     launch('train', DDPG, 'HumanoidStandup-v1', episodes=10000, steps=100, reuse_weights=True)
 
 
-def test_train_pendulum():
+def Pendulum():
+    # OK
     launch('train', DDPG, 'Pendulum-v0', episodes=10000, steps=200, reuse_weights=True)
+
+
+def InvertedDoublePendulum():
+    launch('train', DDPG, 'InvertedDoublePendulum-v1', episodes=10000)
+
 
 # LunarLanderContinuous-v2
 
 if __name__ == '__main__':
-    test_train_tentacle()
-    # test_train_ant()
-    # test_train_reacher()
-    # test_train_humanoid_standup()
-    # test_train_pendulum()
+    InvertedDoublePendulum()
+    # tentacle()
+    # ant()
+    # reacher()
+    # humanoid_standup()
+    # pendulum()
