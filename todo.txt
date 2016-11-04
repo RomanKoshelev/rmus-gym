@@ -4,11 +4,13 @@ TODO:
 - store learning episodes number in th.var and restore it
 - save/load the reply buffer
 - save reward to tensorboard every episode
+   - see https://gym.openai.com/evaluations/eval_GH4gO123SvukqlMmqhIyeQ
 - save  Q target to tensorboard every step
 - Test the Algorithm on current Mujoco-based OpenAI-Gym environment (should learn in appropriate time)
 
 
 DONE:
+x use in actor: scaled_out = tf.mul(out, self.action_bound) (applyed only for simmetric actions)
 + take `done` into accoun:
 + fix qqpg
 + use clipping for actions (tanh ativation)

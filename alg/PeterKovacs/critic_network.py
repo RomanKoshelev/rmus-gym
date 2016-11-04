@@ -37,7 +37,7 @@ class CriticNetwork(object):
         })[0]
 
     def train(self, y, states, actions):
-        self.sess.run(self.optimize, feed_dict={
+        return self.sess.run([self.out, self.optimize], feed_dict={
             self.y: y,
             self.state: states,
             self.action: actions

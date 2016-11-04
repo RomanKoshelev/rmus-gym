@@ -41,8 +41,8 @@ class DDPG:
     def train(self, env, episodes, steps, save_every_episodes):
 
         for ep in xrange(episodes):
-            s, reward, done = env.reset(), 0, False
-            self.exploration.reset()
+            s, reward, terminal = env.reset(), 0, False
+            max_q = 0
 
             for t in xrange(steps):
                 env.render()
@@ -51,54 +51,63 @@ class DDPG:
                 a = self.actor.predict([s]) + self.exploration.noise()
 
                 # execute step
-                ns, r, done, info = env.step(self.fit_to_env(a))
-                self.buff.add(s, a[0], r, ns, done)
+                s2, r, terminal, _ = env.step(self.env_action(a))
+                self.buff.add(s, a[0], r, s2, terminal)
+                s = s2
+                reward += r
 
                 # sample minibatch
                 batch = self.buff.getBatch(cfg.BATCH_SIZE)
-                states, actions, rewards, new_states, dones = zip(*batch)
+                s_batch, a_batch, r_batch, s2_batch, t_batch = zip(*batch)
 
                 # set target
-                target_q = self.critic.target_predict(new_states, self.actor.target_predict(new_states))
-                y = [rewards[i] + (cfg.GAMMA * target_q[i] if not dones[i] else [0.]) for i in range(len(batch))]
+                target_q = self.critic.target_predict(s2_batch, self.actor.target_predict(s2_batch))
+                y = []
+                for i in xrange(len(batch)):
+                    if t_batch[i]:
+                        y.append(r_batch[i])
+                    else:
+                        y.append(r_batch[i] + cfg.GAMMA * target_q[i])
+                y = np.reshape(y, (-1, 1))
 
                 # update critic
-                self.critic.train(y, states, actions)
+                predicted_q, _ = self.critic.train(y, s_batch, a_batch)
+                max_q += np.amax(predicted_q)
 
                 # update actor
-                grads = self.critic.gradients(states, self.actor.predict(states))
-                self.actor.train(states, grads)
+                grads = self.critic.gradients(s_batch, self.actor.predict(s_batch))
+                self.actor.train(s_batch, grads)
 
                 # update the target networks
                 self.actor.target_train()
                 self.critic.target_train()
 
-                # move to next state
-                s = ns
-                reward += r
-
-                if done or (t == steps - 1):
-                    self.print_progress(ep, reward)
+                # end episode
+                if terminal or (t == steps - 1):
+                    print("ep: %3d  |  Reward: %+7.0f  |  Qmax: %+8.2f" % (ep, reward, max_q / float(t)))
+                    self.exploration.reset()
                     break
 
             if (ep > 0 and ep % save_every_episodes == 0) or (ep == episodes - 1):
                 self.save()
 
-    def fit_to_env(self, a):
+    def env_action(self, a):
         ak = (a + 1.) / 2.
         ae = self.act_box[0] + (self.act_box[1] - self.act_box[0]) * ak  # type: np.ndarray
         return np.clip(ae, self.act_box[0], self.act_box[1])[0]
 
     def run(self, env, episodes, steps):
-        for ep in range(episodes):
+        for ep in xrange(episodes):
             s = env.reset()
             reward = 0
-            for t in range(steps):
+            for t in xrange(steps):
                 env.render()
                 a = self.act(s)
-                s, r, _, _ = env.step(a[0])
+                s, r, done, _ = env.step(self.env_action(a))
                 reward += r
-            print("%3d  Reward = %+7.0f  " % (ep, reward))
+                if done or (t == steps - 1):
+                    print("%3d  Reward = %+7.0f" % (ep, reward))
+                    break
 
     def act(self, s):
         return self.actor.predict([s])
@@ -137,6 +146,3 @@ class DDPG:
         print("act_box: %s" % self.act_box[0])
         print("         %s" % self.act_box[1])
         print("==============================================================================\n")
-
-    def print_progress(self, ep, reward):
-        print("%3d  Reward = %+7.0f" % (ep, reward))
