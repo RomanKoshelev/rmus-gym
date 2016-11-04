@@ -10,7 +10,7 @@ BASE_PATH = '../out/tests/'
 RANDOM_SEED = 2016
 
 
-def launch(proc, agent_class, env_name, episodes=125000, steps=None, save_every_episodes=100, reuse_weights=False):
+def launch(proc, env_name, episodes=125000, steps=None, save_every_episodes=100, reuse_weights=False):
     def func_name():
         import traceback
         return traceback.extract_stack(None, 3)[0][2]
@@ -40,46 +40,69 @@ def launch(proc, agent_class, env_name, episodes=125000, steps=None, save_every_
     if not os.path.exists(path):
         os.makedirs(path)
 
-    agent = agent_class(sess, env.spec.id, obs_dim, obs_box, act_dim, act_box, path)
+    agent = DDPG(sess, env.spec.id, obs_dim, obs_box, act_dim, act_box, path)
     if proc == 'train':
         agent.train(env, episodes, steps, save_every_episodes)
     elif proc == 'run':
         agent.run(env, episodes, steps)
 
-
-def Tentacle(from_scratch=False):
-    launch('train', DDPG, 'Tentacle-v0', reuse_weights=not from_scratch)
+    env.close()
 
 
-def Ant(from_scratch=False):
-    launch('train', DDPG, 'Ant-v1', reuse_weights=not from_scratch)
+def run(env_name, episodes=1000, steps=None):
+    launch("run", env_name, episodes, steps, save_every_episodes=0, reuse_weights=True)
 
 
-def Reacher(from_scratch=False):
-    launch('train', DDPG, 'Reacher-v1', reuse_weights=not from_scratch)
+def train(env_name, episodes=125000, steps=None, save_every_episodes=100, reuse_weights=False):
+    launch("train", env_name, episodes, steps, save_every_episodes, reuse_weights)
+
+# =================================================================================================================
 
 
-def HumanoidStandup(from_scratch=False):
-    launch('train', DDPG, 'HumanoidStandup-v1', reuse_weights=not from_scratch)
+# PASSED
+def Pendulum():
+    env = 'Pendulum-v0'
+    train(env, episodes=10, steps=100, save_every_episodes=10)
+    run(env, steps=100)
 
 
-def Pendulum(from_scratch=False):
-    # OK
-    # launch('train', DDPG, 'Pendulum-v0', steps=100, save_every_episodes=10, reuse_weights=not from_scratch)
-    launch('run', DDPG, 'Pendulum-v0', steps=100, reuse_weights=True)
+# PASSED
+def InvertedDoublePendulum():
+    env = 'InvertedDoublePendulum-v1'
+    train(env)
+    run(env)
 
 
-def InvertedDoublePendulum(from_scratch=False):
-    # OK
-    # launch('train', DDPG, 'InvertedDoublePendulum-v1', reuse_weights=not from_scratch)
-    launch('run', DDPG, 'InvertedDoublePendulum-v1', reuse_weights=True)
+def Tentacle():
+    env = 'Tentacle-v0'
+    train(env)
+    run(env)
+
+
+def Reacher():
+    env = 'Reacher-v1'
+    train(env)
+    run(env)
+
+
+def Ant():
+    env = 'Ant-v1'
+    train(env)
+    run(env)
+
+
+def HumanoidStandup():
+    env = 'HumanoidStandup-v1'
+    train(env)
+    run(env)
+
 
 # LunarLanderContinuous-v2
 
 if __name__ == '__main__':
-    # Pendulum(from_scratch=True)
-    # InvertedDoublePendulum(from_scratch=True)
-    Tentacle(from_scratch=True)
-    # Reacher(from_scratch=True)
-    # ant()
-    # humanoid_standup()
+    Pendulum()
+    # InvertedDoublePendulum()
+    # Tentacle()
+    # Reacher()
+    # Ant()
+    # HumanoidStandup()
