@@ -1,5 +1,7 @@
 TODO:
 
+- store learning episodes number in th.var and restore it
+- save/load the reply buffer
 - save reward to tensorboard
 - Test the Algorithm on current Mujoco-based OpenAI-Gym environment (should learn in appropriate time)
 
@@ -66,8 +68,6 @@ view:
 
 - learning performance
   - decade LR
-  - store learning episodes number in th.var and restore it
-  - save/load the reply buffer
   - batch normalization
   - multy env learning
   - dual network

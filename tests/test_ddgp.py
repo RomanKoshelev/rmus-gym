@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import tensorflow as tf
 import gym
+from alg.PeterKovacs.ddpg import DDPG
 
 BASE_PATH = '../out/tests/'
 
@@ -37,24 +38,23 @@ def launch(proc, agent_class, env_name, episodes, steps, save_every_episodes=100
 
 
 def test_train_tentacle():
-    from alg.PeterKovacs.ddpg import DDPG
     launch('train', DDPG, 'Tentacle-v0', episodes=20000, steps=100, reuse_weights=True)
 
 
 def test_train_ant():
-    from alg.PeterKovacs.ddpg import DDPG
     launch('train', DDPG, 'Ant-v1', episodes=10000, steps=500, reuse_weights=True)
 
 
 def test_train_reacher():
-    from alg.PeterKovacs.ddpg import DDPG
-    launch('train', DDPG, 'Reacher-v1', episodes=10000, steps=300, reuse_weights=True)
+    launch('train', DDPG, 'Reacher-v1', episodes=10000, steps=100, reuse_weights=True)
 
 
 def test_train_humanoid_standup():
-    from alg.PeterKovacs.ddpg import DDPG
-    launch('train', DDPG, 'HumanoidStandup-v1', episodes=10000, steps=500, reuse_weights=True)
+    launch('train', DDPG, 'HumanoidStandup-v1', episodes=10000, steps=200, reuse_weights=True)
 
 
 if __name__ == '__main__':
-    test_train_tentacle()
+    # test_train_tentacle()
+    # test_train_ant()
+    test_train_reacher()
+    # test_train_humanoid_standup()

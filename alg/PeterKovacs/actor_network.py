@@ -33,18 +33,14 @@ class ActorNetwork(object):
         })
 
     def predict(self, states):
-        batch_actions = self.sess.run(self.out, feed_dict={
+        return self.sess.run(self.out, feed_dict={
             self.state: states
         })
-        self.verify_actions(batch_actions)
-        return batch_actions
 
     def target_predict(self, states):
-        batch_actions = self.sess.run(self.target_out, feed_dict={
+        return self.sess.run(self.target_out, feed_dict={
             self.target_state: states
         })
-        self.verify_actions(batch_actions)
-        return batch_actions
 
     def target_train(self):
         self.sess.run(self.target_update)
@@ -85,10 +81,3 @@ class ActorNetwork(object):
     def bias_variable(self, shape):
         initial = tf.constant(0.01, shape=shape)
         return tf.Variable(initial)
-
-    def verify_actions(self, batch_actions):
-        for action in batch_actions:
-            for a in action:
-                pass
-                assert -1.001 <= a <= 1.001, "a=%f" % a
-

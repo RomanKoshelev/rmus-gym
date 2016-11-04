@@ -44,31 +44,14 @@ class DDPG:
             s, reward, done = env.reset(), 0, False
             self.exploration.reset()
 
-            # calc noise rate
-            nr_min = .1
-            nr_max = 0.99
-            nr_ep = episodes / 2
-            nr_k = 1 - min(1, (float(ep) / nr_ep))
-            nr = nr_min + nr_k * (nr_max - nr_min)
-
             for t in range(steps):
                 env.render()
 
-                # calc action
-                a = self.actor.predict([s])
-                n = self.exploration.noise()
-                a = (1 - nr) * a + nr * n  # type: np.ndarray
-
-                # fit action to action box
-                act_low = self.act_box[0]
-                act_amp = self.act_box[1] - self.act_box[0]
-                ak = (a + 1.) / 2.
-                ae = act_low + act_amp * ak  # type: np.ndarray
-                ae = np.clip(ae, self.act_box[0], self.act_box[1])
-                self.verify_actions(ae)
+                # add noise to action
+                a = self.actor.predict([s]) + self.exploration.noise()
 
                 # execute step
-                ns, r, done, info = env.step(ae[0])
+                ns, r, done, info = env.step(self.fit_to_env(a))
                 self.buff.add(s, a[0], r, ns, done)
 
                 # sample minibatch
@@ -97,7 +80,12 @@ class DDPG:
             if ep > 0 and ep % save_every_episodes == 0:
                 self.save()
 
-            self.print_progress(ep, reward, nr)
+            self.print_progress(ep, reward)
+
+    def fit_to_env(self, a):
+        ak = (a + 1.) / 2.
+        ae = self.act_box[0] + (self.act_box[1] - self.act_box[0]) * ak  # type: np.ndarray
+        return np.clip(ae, self.act_box[0], self.act_box[1])[0]
 
     def run(self, env, episodes, steps):
         for ep in range(episodes):
@@ -148,12 +136,5 @@ class DDPG:
         print("         %s" % self.act_box[1])
         print("==============================================================================\n")
 
-    def print_progress(self, ep, reward, nr):
-        print("%3d  Reward = %+7.0f   nr = %.2f" % (ep, reward, nr))
-
-    def verify_actions(self, batch_actions):
-        for action in batch_actions:
-            res = action >= self.act_box[0]  # type: np.ndarray
-            assert res.all(), "action=%f" % action
-            res = action <= self.act_box[1]  # type: np.ndarray
-            assert res.all(), "action=%f" % action
+    def print_progress(self, ep, reward):
+        print("%3d  Reward = %+7.0f" % (ep, reward))
