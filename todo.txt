@@ -1,8 +1,13 @@
 TODO:
 
+- take `done` into accoun:
+    ENV.timestep_limit=50,
+    ENV.reward_threshold=-3.75,
+
 - store learning episodes number in th.var and restore it
 - save/load the reply buffer
-- save reward to tensorboard
+- save reward to tensorboard every episode
+- save  Q target to tensorboard every step
 - Test the Algorithm on current Mujoco-based OpenAI-Gym environment (should learn in appropriate time)
 
 

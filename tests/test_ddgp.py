@@ -42,7 +42,7 @@ def test_train_tentacle():
 
 
 def test_train_ant():
-    launch('train', DDPG, 'Ant-v1', episodes=10000, steps=500, reuse_weights=True)
+    launch('train', DDPG, 'Ant-v1', episodes=10000, steps=200, reuse_weights=True)
 
 
 def test_train_reacher():
@@ -50,11 +50,17 @@ def test_train_reacher():
 
 
 def test_train_humanoid_standup():
-    launch('train', DDPG, 'HumanoidStandup-v1', episodes=10000, steps=200, reuse_weights=True)
+    launch('train', DDPG, 'HumanoidStandup-v1', episodes=10000, steps=100, reuse_weights=True)
 
+
+def test_train_pendulum():
+    launch('train', DDPG, 'Pendulum-v0', episodes=10000, steps=200, reuse_weights=True)
+
+# LunarLanderContinuous-v2
 
 if __name__ == '__main__':
-    # test_train_tentacle()
+    test_train_tentacle()
     # test_train_ant()
-    test_train_reacher()
+    # test_train_reacher()
     # test_train_humanoid_standup()
+    # test_train_pendulum()

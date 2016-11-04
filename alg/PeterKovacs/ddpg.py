@@ -54,6 +54,8 @@ class DDPG:
                 ns, r, done, info = env.step(self.fit_to_env(a))
                 self.buff.add(s, a[0], r, ns, done)
 
+                # todo: take `done` into accoun!!
+
                 # sample minibatch
                 batch = self.buff.getBatch(cfg.BATCH_SIZE)
                 states, actions, rewards, new_states, dones = zip(*batch)
