@@ -31,7 +31,7 @@ class DDPG:
         self.sess.run(tf.initialize_variables(var_list))
 
         self.buff = ReplayBuffer(cfg.BUFFER_SIZE)
-        self.exploration = OUNoise(act_dim, mu=0., sigma=0.2)
+        self.exploration = OUNoise(act_dim, mu=0., sigma=.2, theta=.15)
 
         self.saver = tf.train.Saver(var_list)
         self.data_folder = data_folder

@@ -13,7 +13,7 @@ RANDOM_SEED = 2016
 def launch(proc, env_name, episodes=125000, steps=None, save_every_episodes=100, reuse_weights=False):
     def func_name():
         import traceback
-        return traceback.extract_stack(None, 3)[0][2]
+        return traceback.extract_stack(None, 4)[0][2]
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -62,47 +62,47 @@ def train(env_name, episodes=125000, steps=None, save_every_episodes=100, reuse_
 # PASSED
 def Pendulum():
     env = 'Pendulum-v0'
-    train(env, episodes=10, steps=100, save_every_episodes=10)
-    run(env, steps=100)
+    train(env, steps=100, save_every_episodes=50)
+    # run(env, steps=100)
 
 
 # PASSED
 def InvertedDoublePendulum():
     env = 'InvertedDoublePendulum-v1'
     train(env)
-    run(env)
+    # run(env)
 
 
 def Tentacle():
     env = 'Tentacle-v0'
     train(env)
-    run(env)
+    # run(env)
 
 
 def Reacher():
     env = 'Reacher-v1'
     train(env)
-    run(env)
+    # run(env)
 
 
 def Ant():
     env = 'Ant-v1'
     train(env)
-    run(env)
+    # run(env)
 
 
 def HumanoidStandup():
     env = 'HumanoidStandup-v1'
     train(env)
-    run(env)
+    # run(env)
 
 
 # LunarLanderContinuous-v2
 
 if __name__ == '__main__':
-    Pendulum()
+    # Pendulum()
     # InvertedDoublePendulum()
     # Tentacle()
-    # Reacher()
+    Reacher()
     # Ant()
     # HumanoidStandup()
