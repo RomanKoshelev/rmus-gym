@@ -62,15 +62,15 @@ def train(env_name, episodes=125000, steps=None, save_every_episodes=100, reuse_
 # PASSED
 def Pendulum():
     env = 'Pendulum-v0'
-    train(env, steps=100, save_every_episodes=50)
+    train(env, episodes=300, steps=100, save_every_episodes=50)
     # run(env, steps=100)
 
 
 # PASSED
 def InvertedDoublePendulum():
     env = 'InvertedDoublePendulum-v1'
-    train(env)
-    # run(env)
+    # train(env)
+    run(env)
 
 
 def Tentacle():
@@ -79,15 +79,34 @@ def Tentacle():
     # run(env)
 
 
+# FAIL
 def Reacher():
     env = 'Reacher-v1'
     train(env)
     # run(env)
 
 
+def BipedalWalker():
+    env = 'BipedalWalker-v2'
+    train(env)
+    # run(env)
+
+
+def BipedalWalker():
+    env = 'BipedalWalker-v2'
+    train(env)
+    # run(env)
+
+
+def Swimmer():
+    env = 'Swimmer-v1'
+    train(env)
+    # run(env)
+
+
 def Ant():
     env = 'Ant-v1'
-    train(env)
+    train(env, reuse_weights=True)
     # run(env)
 
 
@@ -100,9 +119,11 @@ def HumanoidStandup():
 # LunarLanderContinuous-v2
 
 if __name__ == '__main__':
-    # Pendulum()
+    Pendulum()
     # InvertedDoublePendulum()
     # Tentacle()
-    Reacher()
+    # Swimmer()
+    # BipedalWalker()
+    # Reacher()
     # Ant()
     # HumanoidStandup()

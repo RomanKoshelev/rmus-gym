@@ -48,7 +48,14 @@ class DDPG:
                 env.render()
 
                 # add noise to action
-                a = self.actor.predict([s]) + self.exploration.noise()
+                nr_max = 0.7
+                nr_min = 0.5
+                nr_eps = min(1000., episodes / 10.)
+                nk = 1 - min(1., float(ep) / nr_eps)
+                nr = nr_min + nk * (nr_max - nr_min)
+                a = self.actor.predict([s])
+                n = self.exploration.noise()
+                a = (1 - nr) * a + nr * n  # type: np.ndarray
 
                 # execute step
                 s2, r, terminal, _ = env.step(self.env_action(a))
@@ -84,7 +91,8 @@ class DDPG:
 
                 # end episode
                 if terminal or (t == steps - 1):
-                    print("ep: %3d  |  Reward: %+7.0f  |  Qmax: %+8.2f" % (ep, reward, max_q / float(t)))
+                    print("ep: %3d  |  NR = %.2f  |  Reward: %+7.0f  |  Qmax: %+8.2f" %
+                          (ep, nr, reward, max_q / float(t)))
                     self.exploration.reset()
                     break
 

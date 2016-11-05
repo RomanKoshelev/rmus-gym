@@ -51,7 +51,7 @@ class Tentacle(gym.Env):
         self.tentacle = None
         self.need_destroy = False
 
-        self.action_space = spaces.Box(low=-10., high=10., shape=(3,))
+        self.action_space = spaces.Box(low=-100., high=100., shape=(3,))
         self.observation_space = spaces.Box(low=-100, high=100, shape=(2 + 3 * 3,))
 
         self._reset()
@@ -91,8 +91,8 @@ class Tentacle(gym.Env):
             self.drawlist = self.ground + self.tentacle + self.target
 
         W, _ = self._world_size()
-        self.target[0].position[0] = W / 2 - 6 + 12 * np.random.random()
-        self.target[0].position[1] = GROUND_HEIGHT + 2 + 8 * np.random.random()
+        self.target[0].position[0] = W / 2 - 6 + 8 * np.random.random()  # 6 12
+        self.target[0].position[1] = GROUND_HEIGHT + 2 + 8 * np.random.random()  # 2 8
 
         return np.array(self._make_state())
 
@@ -218,7 +218,7 @@ class Tentacle(gym.Env):
         reward = self._make_reward(action)
         done = False
 
-        if self.tentacle[len(self.tentacle) - 1].position[1] < GROUND_HEIGHT + 1.:  # head near ground
+        if self.tentacle[len(self.tentacle) - 1].position[1] < GROUND_HEIGHT + 2.:  # head near ground
             self.need_destroy = True
 
         return np.array(state), reward, done, {}
@@ -260,7 +260,7 @@ class Tentacle(gym.Env):
 
         rw_touch = + 100. * ((r / max(d, r)) ** 3)
         rw_dist = - 10. * (d ** 2)
-        rw_act = - 1. * (np.sum(np.abs(action) * (0.9, 0.3, 0.1)))  # type: float
+        rw_act = - 1. * np.abs(action).sum()
 
         return rw_touch + rw_dist + rw_act
 
